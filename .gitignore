@@ -1,0 +1,18 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Data (local ETL artifacts — never commit; canonical lives on Google Drive)
+ai_readi/
+work/
+
+# Agent tooling
+.pi-subagents/
+
+# Misc
+*.log
+.DS_Store
