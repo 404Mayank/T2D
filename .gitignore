@@ -5,12 +5,17 @@
 __pycache__/
 *.pyc
 .venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
 
 # Data (local ETL artifacts — never commit; canonical lives on Google Drive)
 ai_readi/
 work/
 
 # Agent tooling
+.pi/
 .pi-subagents/
 
 # Misc
