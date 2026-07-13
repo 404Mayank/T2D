@@ -1,0 +1,98 @@
+# Path A blocks — diagnostics + 1A onboarding
+# See PATH_AHEAD.md and DECISIONS.md
+
+run:
+  seed: 42
+  n_jobs: -1
+  n_trials: 50
+  auc_tie_eps: 0.005
+  es_rounds: 80
+  n_estimators_max: 4000
+  lgbm_device: auto
+  catboost_task_type: CPU
+  catboost_boosting_type: Ordered
+  catboost_boosting_fallback: Plain
+  bootstrap_n: 1000
+  bootstrap_ci: 0.95
+
+paths:
+  watch_green: data/processed/features/watch_green.parquet
+  onboarding: data/processed/features/onboarding.parquet
+  pool_masks: data/processed/meta/pool_masks.parquet
+  artifacts_root: training/path_a_blocks/artifacts
+  floor_artifacts: training/path_a_watch/artifacts
+  floor_run_id: full_20260713_221240
+  floor_model: selected_full_green.joblib
+
+data:
+  expected_n: 1824
+  id_col: person_id
+  label_col: label
+  split_col: recommended_split
+  deny_cols:
+    - label
+    - recommended_split
+    - clinical_site
+    - study_group
+    - wearable_core
+    - wearable_core_strict
+    - aux_eligible
+    - age_discrepancy
+  # Hard onboarding (Training.md) — v1 keep list
+  onboarding_keep:
+    - age
+    - bmi_vsorres
+    - waist_vsorres
+    - height_vsorres
+    - weight_vsorres
+    - hip_vsorres
+    - whr_vsorres
+    - bp1_sysbp_vsorres
+    - bp1_diabp_vsorres
+    - bp2_sysbp_vsorres
+    - bp2_diabp_vsorres
+    - fh_dm2pt
+    - fh_dm2sb
+    - pulse_vsorres
+    - pulse_vsorres_2
+  onboarding_drop:
+    - age_years_at_interview   # all zeros
+    - fh_dm2ptsp               # high missing
+    - fh_dm2sbsp               # high missing
+
+class_weights:
+  lightgbm: balanced
+  catboost: Balanced
+
+calibration:
+  default_method: sigmoid
+  secondary_method: isotonic
+  min_pos_for_isotonic: 30
+
+# Reuse same HPO spaces as watch floor
+hpo:
+  lightgbm:
+    learning_rate: [0.01, 0.1]
+    num_leaves: [8, 48]
+    max_depth: [3, 8]
+    min_child_samples: [10, 80]
+    min_split_gain: [0.5, 8.0]
+    colsample_bytree: [0.25, 0.70]
+    subsample: [0.5, 1.0]
+    subsample_freq: [1, 7]
+    reg_alpha: [1.0e-3, 10.0]
+    reg_lambda: [1.0e-3, 10.0]
+  catboost:
+    learning_rate: [0.01, 0.1]
+    depth: [4, 8]
+    l2_leaf_reg: [1.0, 30.0]
+    random_strength: [0.0, 2.0]
+    bagging_temperature: [0.0, 2.0]
+    min_data_in_leaf: [5, 50]
+    border_count: [32, 128]
+
+floor_reference:
+  test_macro_ovr_auc: 0.6661847329816335
+  test_binary_auc: 0.688888888888889
+  test_macro_auprc: 0.3915682038854875
+  family: catboost

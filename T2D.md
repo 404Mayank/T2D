@@ -10,6 +10,8 @@ Working notes for the ML side. Canonical detail lives in the other project docs 
 | `FEATURES.md` | Feature inventory, leakage rules, GREEN core |
 | `Training.md` | Methodology / Path A–B / build order (source of truth for ML) |
 | `COMPUTE.md` | Machines, Drive, GPU placement |
+| `training/path_a_watch/` | Watch-only GBM floor implementation |
+| `training/path_a_blocks/REPORT.md` | Latest Path A diagnostics + onboarding results |
 
 ## Objective
 
@@ -36,6 +38,10 @@ Historical framing that still motivates deployment:
 Diasense logit-KD. Primary novelty candidate is **B4 — seq2seq full-CGM-trajectory teacher → T2D
 head**, with **representation distillation under LUPI**. Path A (direct LightGBM+CatBoost on
 summary features) is built first and is the floor every aux result is measured against.
+
+**Path A status (2026-07-13):** Watch-only CatBoost floor test 4-AUC **0.666** / binary **0.689**
+(`training/path_a_watch/`). Deployable **watch+onboarding** 4-AUC **0.699** / binary **0.749**
+with decision_bar_pass (`training/path_a_blocks/REPORT.md`). Next block: comorbidity (1B).
 
 ## Diasense — teammate baseline to beat / stay distinct from
 

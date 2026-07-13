@@ -205,6 +205,12 @@ sequence/aux models — not a substitute for locking class weights before featur
 1. **Direct LightGBM + CatBoost** on GREEN summary features, nested CV on `recommended_split`,
    all label formulations (multiclass / binary / **CORN ordinal**). Add **isotonic calibration** +
    Brier. Floor *and* honest reference. Then block-ablate survey add-ons under the §6 hierarchy.
+   - **Status (2026-07-13):** Watch-only floor **done** — package `training/path_a_watch/`
+     (CatBoost test 4-AUC **0.666**, binary **0.689**; fixed `recommended_split`, freeze-before-test).
+     Block ladder started in `training/path_a_blocks/`: diagnostics + **1A watch+onboarding**
+     (test 4-AUC **0.699**, binary **0.749**, decision_bar_pass). See
+     `training/path_a_blocks/REPORT.md`. CORN neural ordinal still deferred; cal remains diagnostic.
+     **Next:** 1B comorbidity (HTN-first) under same decision bar.
 2. **Controlled B1 ablation** — same 64-hidden attention backbone, ± glucose head, summary-CGM
    target. Not the headline; settles whether the teammate's multi-task failure was architecture
    or idea.

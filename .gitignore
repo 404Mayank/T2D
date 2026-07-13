@@ -22,6 +22,7 @@ data/
 
 # Training run artifacts (models, metrics, SHAP plots)
 training/path_a_watch/artifacts/
+training/path_a_blocks/artifacts/
 
 # Misc
 *.log
