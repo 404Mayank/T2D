@@ -1,0 +1,97 @@
+# Path A GBM floor — watch-only GREEN
+# Protocol locks: see DECISIONS.md in this directory.
+# Paths are relative to the repo root unless absolute.
+
+run:
+  seed: 42
+  n_jobs: -1
+  # Optuna trials per model family (full_green)
+  n_trials: 50
+  # AUC tie-break window → prefer higher AUPRC
+  auc_tie_eps: 0.005
+  # Pre-registered selection: pick family by VAL primary metric (not test)
+  selection: val_macro_ovr_auc
+  # Early stopping
+  es_rounds: 80
+  n_estimators_max: 4000
+  # Feature sets
+  primary_feature_set: full_green
+  ablation_feature_set: physio_only
+  # Device: lightgbm can use OpenCL GPU on this machine; catboost GPU needs CUDA (unavailable)
+  # lgbm_device: cpu | gpu | auto  (auto tries gpu, falls back to cpu)
+  lgbm_device: auto
+  catboost_task_type: CPU
+  # Prefer Ordered; fall back to Plain if Ordered fails
+  catboost_boosting_type: Ordered
+  catboost_boosting_fallback: Plain
+
+paths:
+  repo_root: .   # resolved relative to CWD / overridden by CLI
+  watch_green: data/processed/features/watch_green.parquet
+  pool_masks: data/processed/meta/pool_masks.parquet
+  # All run outputs under this package by default
+  artifacts_root: training/path_a_watch/artifacts
+
+data:
+  expected_n: 1824
+  id_col: person_id
+  label_col: label
+  split_col: recommended_split
+  # Never allowed in X
+  deny_cols:
+    - label
+    - recommended_split
+    - clinical_site
+    - study_group
+    - wearable_core
+    - wearable_core_strict
+    - aux_eligible
+    - age
+    - age_discrepancy
+  coverage_cols:
+    - hr_n
+    - stress_n
+    - sleep_n_nights
+    - activity_n_days
+
+metrics:
+  primary: macro_ovr_auc
+  companion: macro_auprc
+  classes: [0, 1, 2, 3]
+
+calibration:
+  # Default: per-class sigmoid (Platt) on val proba + renormalize
+  # Secondary: isotonic (reported; flagged if class n < min_pos)
+  default_method: sigmoid
+  secondary_method: isotonic
+  min_pos_for_isotonic: 30
+
+class_weights:
+  lightgbm: balanced          # sklearn-style class_weight='balanced'
+  catboost: Balanced          # auto_class_weights='Balanced'
+
+hpo:
+  lightgbm:
+    learning_rate: [0.01, 0.1]          # log
+    num_leaves: [8, 48]
+    max_depth: [3, 8]
+    min_child_samples: [10, 80]
+    min_split_gain: [0.5, 8.0]
+    colsample_bytree: [0.25, 0.70]
+    subsample: [0.5, 1.0]
+    subsample_freq: [1, 7]
+    reg_alpha: [1.0e-3, 10.0]           # log
+    reg_lambda: [1.0e-3, 10.0]          # log
+  catboost:
+    learning_rate: [0.01, 0.1]          # log
+    depth: [4, 8]
+    l2_leaf_reg: [1.0, 30.0]            # log
+    random_strength: [0.0, 2.0]
+    bagging_temperature: [0.0, 2.0]
+    min_data_in_leaf: [5, 50]
+    border_count: [32, 128]
+
+ordinal:
+  # Thin OrderedModel baseline (statsmodels); no heavy HPO
+  maxiter: 200
+  method: bfgs

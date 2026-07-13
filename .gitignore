@@ -13,10 +13,15 @@ __pycache__/
 # Data (local ETL artifacts — never commit; canonical lives on Google Drive)
 ai_readi/
 work/
+data/
+!data/.gitkeep
 
 # Agent tooling
 .pi/
 .pi-subagents/
+
+# Training run artifacts (models, metrics, SHAP plots)
+training/path_a_watch/artifacts/
 
 # Misc
 *.log

@@ -1,0 +1,129 @@
+================================================================================
+O1: person.parquet demographics
+================================================================================
+  gender_concept_id: nunique=1  values={0: np.int64(2280)}
+  race_concept_id: nunique=1  values={0: np.int64(2280)}
+  ethnicity_concept_id: nunique=1  values={0: np.int64(2280)}
+  gender_source_value: nunique=1  values={' ': np.int64(2280)}
+  race_source_value: nunique=1  values={' ': np.int64(2280)}
+  ethnicity_source_value: nunique=1  values={' ': np.int64(2280)}
+  year_of_birth: nunique=54  min=1930  max=1983  sample=[np.int64(1948), np.int64(1967), np.int64(1980)]
+  month_of_birth: nunique=1  values={0: np.int64(2280)}
+  day_of_birth: nunique=1  values={0: np.int64(2280)}
+  birth_datetime: nunique=1  values={'1970-01-01 00:00:00': np.int64(2280)}
+  observation sex/gender/race/ethnic matches: ['pxrdcmpdat, PhenX Racial/Ethnic Discrimination su', 'pxrdcmpts, PhenX Racial/Ethnic Discrimination Sur', 'pxrdstartts, PhenX Racial/Ethnic Discrimination S', 'px281501_metadata, PhenX Racial/Ethnic MetaData']
+  measurement sex/gender/race/ethnic matches: []
+
+================================================================================
+O2: condition_occurrence source_values
+================================================================================
+  rows=12375, unique condition_source_value=30
+    mh_a1c, Elevated A1C levels (elevated blood sugar: 1202
+    mhoccur_hbp, High blood pressure: 1151
+    mhoccur_clsh, High blood cholesterol: 1145
+    mhoccur_ra, Arthritis (joint pain): 941
+    mhterm_dm2, Type II Diabetes: 899
+    mhoccur_obs, Obesity: 845
+    mhoccur_ded, Dry eye (in one or both eyes): 741
+    mhoccur_crt, Cataracts (in one or both eyes): 688
+    mhterm_predm, Pre-diabetes: 555
+    mhoccur_ua, Urinary problems (Examples: urinary t: 517
+    mhoccur_gi, Digestive problems (Examples: stomach: 516
+    mhoccur_ca, Cancer (any type): 402
+    mhoccur_ear, Hearing impairment: 331
+    mhoccur_cvdot, Other heart issues (Examples: pace: 317
+    mhoccur_plm, Chronic pulmonary (lung) problems (E: 303
+    mhoccur_oa, Osteoporosis: 291
+    mhoccur_rnl, Kidney problems: 246
+    mhoccur_circ, Circulation problems (Examples: art: 204
+    mhoccur_glc, Glaucoma (in one or both eyes): 192
+    mhoccur_cns, Other neurological conditions: 179
+    mhoccur_lbp, Low blood pressure: 125
+    mhoccur_mi, Heart attack: 124
+    mhoccur_amd, Age-related macular degeneration (AM: 121
+    mhoccur_strk, Stroke: 108
+    mhoccur_pdr, Diabetic retinopathy (in one or both: 101
+    mhoccur_cogn, Mild cognitive impairment (known as: 70
+    mhoccur_rvo, Retinal vascular occlusion ("stroke : 33
+    mhoccur_ms, Multiple sclerosis: 13
+    mhoccur_pd, Parkinson's disease: 11
+    mhoccur_ad, Dementia (Examples: Alzheimer's Disea: 4
+  diabetes/ICD-pattern matches: 1555 rows, source_values=<ArrowStringArray>
+[                     'mhterm_dm2, Type II Diabetes',
+                        'mhterm_predm, Pre-diabetes',
+ 'mhoccur_pdr, Diabetic retinopathy (in one or both']
+Length: 3, dtype: str
+
+================================================================================
+O3+O4: duplicates (full cohort)
+================================================================================
+  heart_rate: checked=2104 pids | exact_dup_rows=10850 | ts_dup_pids=42 | ts_dup_extra_rows=13283
+  stress: checked=2112 pids | exact_dup_rows=42547 | ts_dup_pids=48 | ts_dup_extra_rows=64190
+  respiratory_rate: checked=2113 pids | exact_dup_rows=38843 | ts_dup_pids=49 | ts_dup_extra_rows=64571
+  cgm: checked=2245 pids | exact_dup_rows=40 | ts_dup_pids=80 | ts_dup_extra_rows=960
+
+================================================================================
+O5: schema dtypes for date/timestamp columns
+================================================================================
+  metadata/participants.parquet :: study_visit_date -> arrow large_string
+  clinical/observation.parquet :: observation_date -> arrow large_string
+  clinical/observation.parquet :: observation_datetime -> arrow large_string
+  clinical/measurement.parquet :: measurement_date -> arrow large_string
+  clinical/measurement.parquet :: measurement_datetime -> arrow large_string
+  clinical/measurement.parquet :: measurement_time -> arrow large_string
+  clinical/visit_occurrence.parquet :: visit_start_date -> arrow large_string
+  clinical/visit_occurrence.parquet :: visit_start_datetime -> arrow large_string
+  clinical/condition_occurrence.parquet :: condition_start_date -> arrow large_string
+  clinical/condition_occurrence.parquet :: condition_start_datetime -> arrow large_string
+  sample metadata/participants.parquet.study_visit_date: ['2023-07-27', '2023-08-01', '2023-08-02']
+  sample clinical/observation.parquet.observation_date: ['12/12/23', '10/11/23', '11/14/23']
+  sample clinical/measurement.parquet.measurement_date: ['2023-12-12', '2023-12-18', '2023-08-28']
+  sample clinical/observation.parquet.observation_datetime: ['12/12/23 0:00', '10/11/23 0:00', '11/14/23 0:00']
+  garmin/heart_rate.parquet :: timestamp -> arrow timestamp[ms, tz=UTC]
+  dexcom/cgm.parquet :: timestamp -> arrow timestamp[ms, tz=UTC]
+
+================================================================================
+O6: post-sentinel zero-valid participants
+================================================================================
+  HR: 105/2104 participants with ZERO valid readings after sentinel masking
+  stress: 116/2112 participants with ZERO valid readings after sentinel masking
+  RR: 114/2113 participants with ZERO valid readings after sentinel masking
+
+================================================================================
+O7: CGM <-> HR temporal overlap
+================================================================================
+  CGM∩HR participants: 2085
+  ≤0h overlap: 51  | <24h: 60  | <72h: 98
+  overlap hrs: p5=82  p50=238  p95=238
+  Within aux pool (n=2034): ≤0h overlap=33  | <24h=42  | <72h=80
+
+================================================================================
+M4+M6: anthropometric + BMI outliers
+================================================================================
+  weight_vsorres: n=2274 min=34.90 max=215.80 | ==0: 0 | >60(if bmi): -
+  height_vsorres: n=2273 min=100.40 max=195.60 | ==0: 0 | >60(if bmi): -
+  bmi_vsorres: n=2273 min=15.95 max=95.24 | ==0: 0 | >60(if bmi): 7
+  waist_vsorres: n=4536 min=0.00 max=194.00 | ==0: 1 | >60(if bmi): -
+  hip_vsorres: n=4535 min=0.00 max=207.00 | ==0: 1 | >60(if bmi): -
+  whr_vsorres: n=2267 min=0.37 max=1.79 | ==0: 0 | >60(if bmi): -
+
+================================================================================
+M5: age vs year_of_birth
+================================================================================
+  exact match: 2239  | off by >1y: 41  (max diff=31)
+     person_id  age  year_of_birth  visit_year  implied_age  diff
+187       1189   64           1958        2024           66    -2
+207       1209   57           1956        2024           68   -11
+612       1619   59           1964        2025           61    -2
+616       1623   59           1964        2025           61    -2
+618       1625   48           1975        2025           50    -2
+620       1627   53           1970        2025           55    -2
+624       1631   64           1959        2025           66    -2
+625       1632   57           1966        2025           59    -2
+630       1637   45           1978        2025           47    -2
+631       1638   42           1981        2025           44    -2
+
+================================================================================
+M7: year-long-wear (>60d) split distribution
+================================================================================
+  year-long HR participants: 63  by split: {'train': np.int64(45), 'val': np.int64(10), 'test': np.int64(8)}  by label: {0: np.int64(21), 1: np.int64(14), 2: np.int64(20), 3: np.int64(8)}

@@ -1,0 +1,416 @@
+# T2D cleaning / FE pipeline config
+# All policy knobs live here so experiments can swap without code edits.
+# Paths are relative to the repo root unless absolute.
+
+paths:
+  raw_root: data/full/AI_READI
+  out_root: data/processed
+  # Optional: override individual output subdirs (defaults under out_root)
+  # clean_dir: data/processed/clean
+  # meta_dir: data/processed/meta
+  # features_dir: data/processed/features
+  # reports_dir: data/processed/reports
+
+# ---------------------------------------------------------------------------
+# Timezone & wear-window policy
+# ---------------------------------------------------------------------------
+time:
+  site_tz:
+    UAB: America/Chicago
+    UW: America/Los_Angeles
+    UCSD: America/Los_Angeles
+  # How to handle participants with long wear (> long_wear_days)
+  window:
+    # best_coverage | first | all
+    #   best_coverage: contiguous `days`-length window maximizing valid samples
+    #   first: first `days` from first valid sample
+    #   all: no truncation
+    # Window is HR-anchored and SHARED across all modalities (one [start,end) per pid).
+    policy: best_coverage
+    days: 14
+    long_wear_days: 60
+    # If true, slice EVERY pid to `days` (not only span>long_wear_days).
+    # Default false = use-all for ≤60d wearers; long wearers get best-coverage 14d.
+    # Set true for cross-pid window-length consistency (H3 sensitivity).
+    force_all_to_window: false
+  # Drop modality rows with timestamp year before this (corrupt TS, e.g. pid 4280 RR)
+  min_year: 2000
+  # RHR nocturnal window in *local* time (hour inclusive start, exclusive end)
+  rhr_local_hours: [3, 7]
+
+# ---------------------------------------------------------------------------
+# Coverage / pool gates (applied AFTER sentinel masking)
+# ---------------------------------------------------------------------------
+coverage:
+  # A "valid HR day" has at least this many unique 1-min samples after cleaning
+  min_minutes_per_hr_day: 60
+  min_hr_valid_days: 7
+  # Mean (unique minutes / 1440) across valid HR days — Garmin is not 24/7 dense.
+  # 0.80 was unrealistically high on full-day denominators (~0.4–0.6 typical).
+  # Sweep this; record both wearable_core and a looser flag in pool_masks.
+  min_hr_minute_frac: 0.35
+  # Optional looser/stricter companions written as extra columns
+  hr_minute_frac_sensitivity: [0.25, 0.35, 0.50, 0.80]
+  min_sleep_nights: 7        # soft flag always written; hard gate if enforce_sleep_nights
+  # Default true: SRI/onset-SD unstable below ~7 nights (H4). Set false for sensitivity.
+  enforce_sleep_nights: true
+  min_stress_valid_days: 1   # must have some valid stress for wearable_core
+  min_cgm_days: 8            # aux only
+  min_cgm_hr_overlap_hours: 24
+  # Also record sensitivity columns at these overlaps (hours)
+  overlap_sensitivity_hours: [0, 24, 72]
+
+# ---------------------------------------------------------------------------
+# Sentinels & physiological bounds
+# ---------------------------------------------------------------------------
+sentinels:
+  heart_rate_off: 0
+  stress_invalid: [-1, -2]
+  respiratory_rate_invalid: [-1, -2]
+  spo2_off: 0
+  survey_codes: [555, 777, 888, 999, 99]
+  # Garmin stress scale is 0–100
+  stress_medium: 51
+  stress_high: 76
+
+bounds:
+  heart_rate: [1, 220]
+  stress_level: [0, 100]
+  respiratory_rate: [4, 60]
+  oxygen_saturation: [50, 100]
+  blood_glucose: [40, 400]
+  sleep_duration_hours: [0, 16]
+  activity_duration_hours: [0, 24]
+  # Anthropometrics
+  waist_cm_min: 1
+  hip_cm_min: 1
+  bmi_flag_above: 60          # flag in report
+  null_bmi_above: 80          # NaN BMI above this (extreme outliers; 7 pids >60 in audit)
+
+# ---------------------------------------------------------------------------
+# Dedup
+# ---------------------------------------------------------------------------
+dedup:
+  # exact: drop fully identical rows
+  # timestamp: for same (person_id, timestamp), keep first | last | mean
+  timestamp_keep: first
+  log_top_dup_pids: 10
+
+# ---------------------------------------------------------------------------
+# Interval modalities
+# ---------------------------------------------------------------------------
+intervals:
+  sleep:
+    drop_unknown_stage: true   # drop unknown rows for stage-% ; SRI uses awake/sleep binary
+    max_duration_hours: 24
+    min_duration_seconds: 1
+  activity:
+    max_duration_hours: 24
+    min_duration_seconds: 1
+    blank_name_as: unknown
+    # activity_name → intensity tier for MVPA features
+    # 0=sedentary, 1=light, 2=moderate_vigorous, null=unknown (excluded from MVPA mins)
+    intensity_map:
+      sedentary: 0
+      walking: 1
+      generic: 1
+      running: 2
+      unknown: null
+  calorie:
+    # If differencing counter, negative diffs → this (null = NaN, 0 = clamp)
+    negative_diff_policy: zero   # zero | nan | keep
+
+# ---------------------------------------------------------------------------
+# Clinical / OMOP
+# ---------------------------------------------------------------------------
+clinical:
+  # value column used when pivoting numeric features
+  prefer_numeric: true
+  # Age: participants.age vs year_of_birth-derived
+  age_source: participants      # participants | year_of_birth
+  age_discrepancy_flag_years: 2
+  # condition_occurrence: never pivot into features (dup of observation)
+  use_condition_occurrence_features: false
+  # Block membership for feature matrices (prefix → block)
+  # Anything classified keep_* without a block goes to "other_keep"
+  blocks:
+    onboarding_prefixes:
+      - age  # synthetic from participants
+      - bmi_vsorres
+      - weight_vsorres
+      - height_vsorres
+      - waist_vsorres
+      - hip_vsorres
+      - whr_vsorres
+      - bp1_sysbp_vsorres
+      - bp1_diabp_vsorres
+      - bp2_sysbp_vsorres
+      - bp2_diabp_vsorres
+      - pulse_vsorres
+      - pulse_vsorres_2
+      - fh_dm2
+      - smoking
+      - smok
+    comorbidity_prefixes:
+      - mhoccur_
+    mood_prefixes:
+      - paid
+      - cesd
+      - ces_
+      - via1
+      - via2
+      - via3
+    diet_prefixes:
+      - diet
+      - food
+      - nutr
+
+# ---------------------------------------------------------------------------
+# Classification rules for source_value prefixes (order: first match wins)
+# class ∈ hard_exclude | retinal_drop | metadata_drop | labs_upper_bound
+#         | keep_onboarding | keep_comorbidity | keep_mood | keep_diet
+#         | keep_survey | borderline
+# ---------------------------------------------------------------------------
+classify:
+  hard_exclude_prefixes:
+    - import_hba1c
+    - import_a1c
+    - lbscat_a1c
+    - import_glucose
+    - import_insulin
+    - import_c_peptide
+    - mhterm_dm1
+    - mhterm_dm2
+    - mhterm_predm
+    - mh_a1c
+    - mh_dm_age
+    - cmtrt_insln
+    - cmtrt_a1c
+    - cmtrt_glcs
+    - cmtrt_lfst
+    - mhoccur_pdr
+    - mhoccur_glc          # self-report glucose/hyperglycemia — leakage-adjacent
+    - mhoccur_rvo          # retinal vascular occlusion — diabetes-eye adjacent
+    - dri1                 # diabetic retinopathy insufficiency items
+    - dri2
+    - dmlcmpdat
+    - dmlstartts
+    - dmlcmpts
+  # Additional exact prefixes to hard-exclude (filled after catalog review)
+  hard_exclude_exact: []
+  # Substrings that mark a feature column as leakage in leakage_column_scan
+  leakage_substrings:
+    - hba1c
+    - import_insulin
+    - import_glucose
+    - c_peptide
+    - mhterm_dm
+    - mhoccur_glc
+    - mhoccur_pdr
+    - mhoccur_rvo
+    - cmtrt_insln
+    - cmtrt_a1c
+    - cmtrt_glcs
+    - cmtrt_lfst
+    - dri1
+    - dri2
+  metadata_suffixes:
+    - startts
+    - cmpts
+    - cmpdat
+    - endts
+  retinal_drop_prefixes:
+    - rt_dat
+    - rtci_
+    - rtma_
+    - rttr_
+    - mlcs
+    - plcs
+    - mssrf
+    - mssrl
+    - msslffl              # foot monofilament (left) — diabetes-targeted exam
+    - mssrffl              # foot monofilament (right)
+    - via4
+    - via5
+    - via6
+    - viaod
+    - viaos
+    - viaocmpdat
+    - viastartts
+    - viacmpts
+    - mlcscmpdat
+    - plcscmpdat
+  # Keep via1–3 as survey/mood (see blocks); do not put via1 in retinal
+  labs_upper_bound_prefixes:
+    - import_nt_probnp
+    - import_troponin
+    - import_crp
+    - import_total_cholesterol
+    - import_triglycerides
+    - import_hdl
+    - import_ldl
+    - import_chol
+  metadata_drop_prefixes:
+    - pxrd
+    - px281501
+    - moca
+    - cube_visuospatial
+    - clock_visuospatial
+    - trails_visuospatial
+    - delayed_recall
+    - digitspan
+    - lettera
+    - subtraction
+    - repetition
+    - fluency
+    - naming
+    - memory_trial
+    - cesmpdat
+    - cesstartts
+    - dmgcmpdat
+    - dmgcmpts
+    - dmgstartts
+    - mhcmpdat
+    - cmcmpdat
+    - dricmpdat
+    - dmlcmpdat
+    - dmlstartts
+    - dmlcmpts
+    - dmlact
+    - dmledu
+    - dmlfeet
+    # instrument completion timestamps (not features)
+    - paidstartts
+    - paidcmpts
+    - paidcmpdat
+  # Any prefix ending with these is metadata even if keep_* would match
+  metadata_drop_suffixes:
+    - startts
+    - cmpts
+    - cmpdat
+  keep_onboarding_prefixes:
+    - bmi_vsorres
+    - weight_vsorres
+    - height_vsorres
+    - waist_vsorres
+    - hip_vsorres
+    - whr_vsorres
+    - bp1_
+    - bp2_
+    - pulse_vsorres
+    - fh_dm2
+    - fh_
+    - smok
+    - tobacco
+  keep_comorbidity_prefixes:
+    - mhoccur_
+  keep_mood_prefixes:
+    # paidscore etc. — NOT paidstartts/paidcmpts (caught by metadata_drop_suffixes)
+    - paidscore
+    - paid_
+    - cesd
+    - ces_
+    - ces1
+    - ces2
+    - ces3
+    - ces4
+    - ces5
+    - ces6
+    - ces7
+    - ces8
+    - ces9
+    - ces10
+    - cestl
+    - via1
+    - via2
+    - via3
+  keep_diet_prefixes:
+    - diet
+    - food
+    - nutr
+    - dmlfrveg
+    - dmlgrain
+    - dmlsugar
+    - dmlpor
+    - dmlmd
+    - dmlhex
+    - dmlvex
+  # Self-report meds that are NOT diabetes-defining (still review cmtrt_* via borderline)
+  keep_survey_prefixes:
+    - cm_act
+    - cm_ant
+    - cm_asp
+    - cm_dcg
+    - cm_ibp
+    - cm_slp
+    - cl_maristat
+    - age_years_at_interview
+    - brthyy
+  # If a keep rule would match hard_exclude (e.g. mhoccur_pdr), hard_exclude wins.
+  # What to do with prefixes that match no rule:
+  #   borderline = exclude from pivot until human edits source_value_map.csv
+  #   keep_survey = include as other_keep block (more recall, less review)
+  unmatched_class: borderline
+  # Other labs → upper-bound arm (not watch primary)
+  labs_upper_bound_extra_prefixes:
+    - import_albumin
+    - import_alt
+    - import_ast
+    - import_bilirubin
+    - import_bun
+    - import_calcium
+    - import_chloride
+    - import_creatinine
+    - import_potassium
+    - import_sodium
+    - import_protein
+    - import_globulin
+    - import_urine
+    - lbscat_
+    - import_a_g
+    - import_alkaline
+    - import_carbon_dioxide
+
+# ---------------------------------------------------------------------------
+# Feature engineering (View A — GREEN)
+# ---------------------------------------------------------------------------
+features:
+  watch_green:
+    enabled: true
+    # Require these pool flags to emit a row (empty = all pids with any HR)
+    require_pool: wearable_core
+    hr_stats: true
+    rhr: true
+    stress_stats: true
+    sleep_sri: true
+    sleep_duration: true
+    activity_mvpa: true
+    rar_cosinor: true
+    # Sleep duration target for U-shape (hours)
+    sleep_target_hours: 7.5
+  blocks:
+    # Which clinical blocks to write as separate matrices
+    write:
+      - onboarding
+      - comorbidity
+      - mood
+      # - diet
+
+# ---------------------------------------------------------------------------
+# Runtime
+# ---------------------------------------------------------------------------
+runtime:
+  # Process only these modalities (null = all series modalities)
+  only_modalities: null
+  # Limit to N participants (for smoke tests); null = all
+  max_participants: null
+  # When max_participants is set, prefer pids that appear in heart_rate.parquet first
+  prefer_hr_participants: true
+  # Participant id allow-list (null = all)
+  participant_ids: null
+  seed: 0
+  progress_every: 200
+  # Parquet write
+  zstd_level: 1
+  # Fail if leakage columns found in feature output
+  strict_leakage_assert: true

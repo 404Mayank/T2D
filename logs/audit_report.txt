@@ -1,0 +1,261 @@
+
+==========================================================================================
+  0. FILE INVENTORY & PARQUET INTEGRITY
+==========================================================================================
+parquet files found: 15
+  clinical/condition_occurrence.parquet:    12,375 rows |  16 cols |     1 row-groups |     0.1 MiB
+  clinical/measurement.parquet:   242,279 rows |  25 cols |     1 row-groups |     1.1 MiB
+  clinical/observation.parquet:   707,126 rows |  21 cols |     1 row-groups |     3.2 MiB
+  clinical/person.parquet:     2,280 rows |  18 cols |     1 row-groups |     0.0 MiB
+  clinical/procedure_occurrence.parquet:    49,879 rows |  16 cols |     1 row-groups |     0.2 MiB
+  clinical/visit_occurrence.parquet:     4,519 rows |  17 cols |     1 row-groups |     0.1 MiB
+  dexcom/cgm.parquet: 6,194,153 rows |   7 cols |  2245 row-groups |    31.9 MiB
+  garmin/heart_rate.parquet: 22,058,258 rows |   4 cols |  2104 row-groups |   112.2 MiB
+  garmin/oxygen_saturation.parquet: 3,029,338 rows |   5 cols |  1638 row-groups |    15.5 MiB
+  garmin/physical_activity.parquet: 9,583,595 rows |   6 cols |  2118 row-groups |    88.0 MiB
+  garmin/physical_activity_calorie.parquet: 2,443,822 rows |   4 cols |  1994 row-groups |    16.3 MiB
+  garmin/respiratory_rate.parquet: 47,563,531 rows |   4 cols |  2113 row-groups |   259.6 MiB
+  garmin/sleep.parquet:   566,924 rows |   4 cols |  2109 row-groups |     5.4 MiB
+  garmin/stress.parquet: 47,594,003 rows |   4 cols |  2112 row-groups |   244.0 MiB
+  metadata/participants.parquet:     2,280 rows |   7 cols |     1 row-groups |     0.0 MiB
+
+TOTAL rows across all parquet: 140,054,362
+
+==========================================================================================
+  1. PARTICIPANTS / LABEL / SPLIT
+==========================================================================================
+participants: 2280 rows, columns: ['person_id', 'study_group', 'age', 'clinical_site', 'study_visit_date', 'recommended_split', 'label']
+
+label distribution:
+  label=0: 776 (34.0%)
+  label=1: 560 (24.6%)
+  label=2: 686 (30.1%)
+  label=3: 258 (11.3%)
+
+recommended_split distribution:
+  train: 1576 (69.1%)
+  val: 352 (15.4%)
+  test: 352 (15.4%)
+
+label × split (to check imbalance is consistent across splits):
+recommended_split  test  train  val
+label                              
+0                    88    600   88
+1                    88    384   88
+2                    90    487  109
+3                    86    105   67
+
+study_group raw values:
+  healthy: 776
+  oral_medication_and_or_non_insulin_injectable_medication_controlled: 686
+  pre_diabetes_lifestyle_controlled: 560
+  insulin_dependent: 258
+
+clinical_site distribution (for UTC→local feasibility):
+  UAB: 800
+  UW: 798
+  UCSD: 682
+
+nulls per column:
+
+age: min=40, max=94, mean=60.9, nulls=0
+duplicate person_id: 0
+
+==========================================================================================
+  2. DATASET_INFO.JSON
+==========================================================================================
+{
+  "dataset": "full",
+  "generated_at": "2026-07-07T13:55:05.705769+00:00",
+  "root_guid": "c3521e3c-030f-45f7-85c6-ca09ecaeaada",
+  "n_participants": 2280,
+  "label_map": {
+    "healthy": 0,
+    "pre_diabetes_lifestyle_controlled": 1,
+    "oral_medication_and_or_non_insulin_injectable_medication_controlled": 2,
+    "insulin_dependent": 3
+  },
+  "workers": {
+    "threads": 32,
+    "procs": 32,
+    "merge_readers": 32,
+    "rclone": 32,
+    "zstd_level": 1
+  },
+  "sentinels": {
+    "heart_rate=0": "sensor off",
+    "stress in {-1,-2}": "invalid",
+    "respiratory_rate in {-1,-2}": "invalid",
+    "oxygen_saturation=0": "invalid"
+  },
+  "ecg": {
+    "array": "ecg/recordings.npy float32 (N,12,max_len) NaN-padded (physical mV, NOT bit-exact)",
+    "true_sig_len_in": "ecg/index.parquet"
+  },
+  "timestamps": "tz-aware UTC",
+  "architecture": "bulk-download(5 azcopy) -> bulk-process(ProcessPool 32, local raw) -> parallel-merge(zstd level 1) -> rclone"
+}
+
+==========================================================================================
+  3. GARMIN — HEART RATE (sentinel: ==0 ; phys: 20–220)
+==========================================================================================
+
+--- heart_rate ---  (2104 participants with row-groups)
+  span_days:  min=0.00  p25=13.07  median=14.63  p75=17.21  max=397.01
+  span < 7d:  56/2104 (2.7%)   | <1d: 16/2104 (0.8%)
+  n_rows/participant: min=2  median=11101  max=38287
+  val_null total: 0  | participants with all-null values: 0/2104 (0.0%)
+  HR==0 (sensor off): total=1214595  | participants with >0: 2101/2104 (99.9%)
+  out-of-range: below=1214595  above=2
+  val range: min=0.00  max=235.00
+  modality coverage: 2104/2280 (92.3%)  | missing: 176
+
+==========================================================================================
+  4. GARMIN — STRESS (sentinel: {-1,-2} ; phys: 0–17)
+==========================================================================================
+
+--- stress ---  (2112 participants with row-groups)
+  span_days:  min=0.00  p25=13.07  median=14.51  p75=17.21  max=397.02
+  span < 7d:  65/2112 (3.1%)   | <1d: 25/2112 (1.2%)
+  n_rows/participant: min=1  median=20479  max=129095
+  val_null total: 0  | participants with all-null values: 0/2112 (0.0%)
+  stress∈{-1,-2}: total=26881018  | participants with >0: 2112/2112 (100.0%)
+  out-of-range: below=26881018  above=17073495
+  val range: min=-2.00  max=101.00
+  modality coverage: 2112/2280 (92.6%)  | missing: 168
+
+==========================================================================================
+  5. GARMIN — RESPIRATORY_RATE (sentinel: {-1,-2} ; phys: 4–60)
+==========================================================================================
+
+--- respiratory_rate ---  (2113 participants with row-groups)
+  span_days:  min=0.00  p25=13.07  median=14.51  p75=17.21  max=12215.26
+  span < 7d:  65/2113 (3.1%)   | <1d: 25/2113 (1.2%)
+  n_rows/participant: min=1  median=20454  max=129034
+  val_null total: 0  | participants with all-null values: 0/2113 (0.0%)
+  RR∈{-1,-2}: total=24202120  | participants with >0: 2113/2113 (100.0%)
+  out-of-range: below=24571226  above=0
+  val range: min=-2.00  max=35.41
+  modality coverage: 2113/2280 (92.7%)  | missing: 167
+
+==========================================================================================
+  6. GARMIN — OXYGEN_SATURATION (sentinel: ==0 ; phys: 50–100)
+==========================================================================================
+
+--- oxygen_saturation ---  (1638 participants with row-groups)
+  span_days:  min=0.00  p25=10.00  median=11.00  p75=11.00  max=241.17
+  span < 7d:  152/1638 (9.3%)   | <1d: 37/1638 (2.3%)
+  n_rows/participant: min=1  median=1883  max=12087
+  val_null total: 2670  | participants with all-null values: 10/1638 (0.6%)
+  SpO2==0: total=0  | participants with >0: 0/1638 (0.0%)
+  out-of-range: below=0  above=191
+  val range: min=69.00  max=101.00
+  modality coverage: 1638/2280 (71.8%)  | missing: 642
+  measurement_method: {'pulse oximetry': 3029338}
+
+==========================================================================================
+  7. GARMIN — PHYSICAL_ACTIVITY_CALORIE (interval ts; phys: 0–5000)
+==========================================================================================
+
+--- calories ---  (1994 participants with row-groups)
+  span_days:  min=0.00  p25=10.20  median=10.87  p75=11.68  max=349.15
+  span < 7d:  85/1994 (4.3%)   | <1d: 8/1994 (0.4%)
+  n_rows/participant: min=1  median=1157  max=4894
+  val_null total: 0  | participants with all-null values: 0/1994 (0.0%)
+  out-of-range: below=0  above=0
+  val range: min=0.00  max=4847.00
+  modality coverage: 1994/2280 (87.5%)  | missing: 286
+
+==========================================================================================
+  8/9. GARMIN — SLEEP (interval: start_time/end_time)
+==========================================================================================
+  2109 participants | intervals total=566924
+  span_days: median=10.20  min=0.02  max=348.35
+  bad_order (end<start): 9  | neg_dur: 9  | zero_dur: 11  | huge_dur(>24h): 2
+  ts_null: 0
+  sleep_stage_state values: {'light': 274460, 'awake': 110009, 'deep': 99880, 'rem': 81619, 'unknown': 956}
+  coverage: 2109/2280 (92.5%)
+
+==========================================================================================
+  8/9. GARMIN — PHYSICAL_ACTIVITY (interval: start_time/end_time)
+==========================================================================================
+  2118 participants | intervals total=9583595
+  span_days: median=14.89  min=0.00  max=397.02
+  bad_order (end<start): 0  | neg_dur: 0  | zero_dur: 33520  | huge_dur(>24h): 235
+  ts_null: 0
+  activity_name top 25:
+    sedentary: 7137287
+    walking: 1873191
+    generic: 543043
+    running: 27588
+    : 2486
+  coverage: 2118/2280 (92.9%)
+
+==========================================================================================
+  10. DEXCOM CGM (event_type, glucose range, coverage)
+==========================================================================================
+  event_type distribution: {'EGV': 6194153}
+  unit distribution: {'mg/dL': 6194153}
+  2245 participants with CGM
+  span_days: median=9.91  p25=9.90  p75=9.91  min=0.15  max=13.62
+  <7d CGM: 78/2245 (3.5%)
+  bg range: min=39.0  max=401.0  | below40: 1  above400: 2
+  bg_null total: 39632
+  CGM coverage: 2245/2280 (98.5%)
+
+==========================================================================================
+  11. CLINICAL — schema, row counts, leakage-field presence
+==========================================================================================
+
+--- clinical/person ---  2,280 rows × 18 cols
+  columns: ['person_id', 'gender_concept_id', 'year_of_birth', 'month_of_birth', 'day_of_birth', 'birth_datetime', 'race_concept_id', 'ethnicity_concept_id', 'location_id', 'provider_id', 'care_site_id', 'person_source_value', 'gender_source_value', 'gender_source_concept_id', 'race_source_value', 'race_source_concept_id', 'ethnicity_source_value', 'ethnicity_source_concept_id']
+  unique person_id: 2280  | nulls: 0
+
+--- clinical/condition_occurrence ---  12,375 rows × 16 cols
+  columns: ['condition_occurrence_id', 'person_id', 'condition_concept_id', 'condition_start_date', 'condition_start_datetime', 'condition_end_date', 'condition_end_datetime', 'condition_type_concept_id', 'condition_status_concept_id', 'stop_reason', 'provider_id', 'visit_occurrence_id', 'visit_detail_id', 'condition_source_value', 'condition_source_concept_id', 'condition_status_source_value']
+  unique person_id: 2189  | nulls: 0
+
+--- clinical/measurement ---  242,279 rows × 25 cols
+  columns: ['measurement_id', 'person_id', 'measurement_concept_id', 'measurement_date', 'measurement_datetime', 'measurement_time', 'measurement_type_concept_id', 'operator_concept_id', 'value_as_number', 'value_as_concept_id', 'unit_concept_id', 'range_low', 'range_high', 'provider_id', 'visit_occurrence_id', 'visit_detail_id', 'measurement_source_value', 'measurement_source_concept_id', 'unit_source_value', 'unit_source_concept_id', 'value_source_value', 'measurement_event_id', 'meas_event_field_concept_id', 'qualifier_concept_id', 'qualifier_source_value']
+  unique person_id: 2280  | nulls: 0
+  columns >50% null: {'value_source_value': 72.3, 'range_low': 54.8, 'range_high': 53.0}
+
+--- clinical/observation ---  707,126 rows × 21 cols
+  columns: ['observation_id', 'person_id', 'observation_concept_id', 'observation_date', 'observation_datetime', 'observation_type_concept_id', 'value_as_number', 'value_as_string', 'value_as_concept_id', 'qualifier_concept_id', 'unit_concept_id', 'provider_id', 'visit_occurrence_id', 'visit_detail_id', 'observation_source_value', 'observation_source_concept_id', 'unit_source_value', 'qualifier_source_value', 'value_source_value', 'observation_event_id', 'obs_event_field_concept_id']
+  unique person_id: 2280  | nulls: 0
+  columns >50% null: {'unit_source_value': 100.0}
+  [SURVEY-SENTINELS] numeric codes 555/777/888/999/99 found in 4 cols:
+    observation_id: {555: 1, 777: 1, 888: 1, 999: 1, 99: 1}
+    value_as_number: {555: 1972, 777: 3210, 888: 16, 999: 690, 99: 60}
+    value_as_string: {555: 1964, 777: 3206, 888: 15, 999: 689, 99: 60}
+    visit_occurrence_id: {555: 314, 777: 313, 999: 314}
+
+--- clinical/procedure_occurrence ---  49,879 rows × 16 cols
+  columns: ['procedure_occurrence_id', 'person_id', 'procedure_concept_id', 'procedure_date', 'procedure_datetime', 'procedure_end_date', 'procedure_end_datetime', 'procedure_type_concept_id', 'modifier_concept_id', 'quantity', 'provider_id', 'visit_occurrence_id', 'visit_detail_id', 'procedure_source_value', 'procedure_source_concept_id', 'modifier_source_value']
+  unique person_id: 2268  | nulls: 0
+
+--- clinical/visit_occurrence ---  4,519 rows × 17 cols
+  columns: ['visit_occurrence_id', 'person_id', 'visit_concept_id', 'visit_start_date', 'visit_start_datetime', 'visit_end_date', 'visit_end_datetime', 'visit_type_concept_id', 'provider_id', 'care_site_id', 'visit_source_value', 'visit_source_concept_id', 'admitted_from_concept_id', 'admitted_from_source_value', 'discharged_to_concept_id', 'discharged_to_source_value', 'preceding_visit_occurrence_id']
+  unique person_id: 2280  | nulls: 0
+
+==========================================================================================
+  12. CROSS-MODALITY AVAILABILITY MATRIX
+==========================================================================================
+  participants (from index): 2280
+     hr: 2104/2280 (92.3%)
+  stress: 2112/2280 (92.6%)
+     rr: 2113/2280 (92.7%)
+    spo: 1638/2280 (71.8%)
+    cal: 1994/2280 (87.5%)
+    slp: 2109/2280 (92.5%)
+    act: 2118/2280 (92.9%)
+    cgm: 2245/2280 (98.5%)
+
+  intersection(hr∩stress∩rr∩sleep∩cgm): 2034/2034 (100.0%)
+  wearable core (hr∩stress∩sleep, no CGM): 2034/2034 (100.0%)
+
+==========================================================================================
+  13. TIMESTAMP SANITY — tz, duplicates, monotonicity
+==========================================================================================
+  HR sampled 200 participants: duplicate-timestamps total=26, non-monotonic groups=0
+  (timestamps stored as tz-aware UTC per DATA_STRUCTURE — verify dtype in schema above)

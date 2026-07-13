@@ -1,0 +1,348 @@
+================================================================================
+  STRESS VALUE DISTRIBUTION (documented 0-17; observed max=101)
+================================================================================
+total stress rows: 47,594,003
+value_counts (top 30, sorted by value):
+    -2.0:  5,565,829  (11.69%)
+    -1.0: 21,315,189  (44.79%)
+     0.0:    134,095  (0.28%)
+     1.0:    247,933  (0.52%)
+     2.0:    206,555  (0.43%)
+     3.0:    191,844  (0.40%)
+     4.0:    186,000  (0.39%)
+     5.0:    181,611  (0.38%)
+     6.0:    180,793  (0.38%)
+     7.0:    182,262  (0.38%)
+     8.0:    184,686  (0.39%)
+     9.0:    187,793  (0.39%)
+    10.0:    193,824  (0.41%)
+    11.0:    201,135  (0.42%)
+    12.0:    209,038  (0.44%)
+    13.0:    215,805  (0.45%)
+    14.0:    220,922  (0.46%)
+    15.0:    232,039  (0.49%)
+    16.0:    239,263  (0.50%)
+    17.0:    243,892  (0.51%)
+    18.0:    249,306  (0.52%)
+    19.0:    242,041  (0.51%)
+    20.0:    220,784  (0.46%)
+    21.0:    193,787  (0.41%)
+    22.0:    181,097  (0.38%)
+    23.0:    174,653  (0.37%)
+    24.0:    226,479  (0.48%)
+    25.0:     55,891  (0.12%)
+    26.0:     21,282  (0.04%)
+    27.0:     42,713  (0.09%)
+    28.0:     40,789  (0.09%)
+    29.0:    111,344  (0.23%)
+    30.0:    302,833  (0.64%)
+    31.0:    171,868  (0.36%)
+    32.0:    174,962  (0.37%)
+    33.0:    342,417  (0.72%)
+    34.0:    161,394  (0.34%)
+    35.0:    160,532  (0.34%)
+    36.0:    305,496  (0.64%)
+    37.0:    148,486  (0.31%)
+
+buckets:
+  ==-2: 5,565,829  (11.7%)
+  ==-1: 21,315,189  (44.8%)
+  0-17 (documented valid): 3,639,490  (7.6%)
+  18-100: 17,073,493  (35.9%)
+  >100: 2
+  NaN: 0
+
+per-participant stress max (sample first 1500 row-groups):
+  participants with abs_max>17: 1402/1500
+  abs_max distribution: min=-2 p50=99 p90=100 max=101
+
+================================================================================
+  TIMESTAMP OUTLIERS (RR span 12215d, HR/stress 397d)
+================================================================================
+
+  heart_rate: 63 participants with span>60d
+    pid=4364 span=397.0d  n=24364  2023-09-01 21:26:35+00:00 → 2024-10-02 21:43:35+00:00
+    pid=4340 span=381.9d  n=25477  2023-09-01 21:26:35+00:00 → 2024-09-17 19:35:35+00:00
+    pid=1652 span=299.0d  n=12524  2024-04-14 17:02:35+00:00 → 2025-02-07 18:05:35+00:00
+    pid=4186 span=273.0d  n=8571  2023-08-31 20:07:35+00:00 → 2024-05-30 21:07:35+00:00
+    pid=4193 span=272.9d  n=26873  2023-09-01 21:26:35+00:00 → 2024-05-31 19:15:35+00:00
+    pid=4176 span=267.0d  n=1543  2023-08-31 18:19:35+00:00 → 2024-05-24 19:00:35+00:00
+    pid=4169 span=258.9d  n=25871  2023-09-01 21:26:35+00:00 → 2024-05-17 18:06:35+00:00
+    pid=4167 span=257.0d  n=8477  2023-08-31 20:07:35+00:00 → 2024-05-14 20:58:35+00:00
+
+  respiratory_rate: 64 participants with span>60d
+    pid=4280 span=12215.3d  n=8025  1991-02-14 18:00:05+00:00 → 2024-07-26 00:17:35+00:00
+    pid=4364 span=397.0d  n=105093  2023-09-01 21:12:35+00:00 → 2024-10-02 21:43:35+00:00
+    pid=4340 span=381.9d  n=102088  2023-09-01 21:12:35+00:00 → 2024-09-17 19:35:35+00:00
+    pid=1652 span=299.1d  n=20198  2024-04-14 17:02:35+00:00 → 2025-02-07 18:15:35+00:00
+    pid=4186 span=273.1d  n=43351  2023-08-31 20:07:35+00:00 → 2024-05-30 21:22:35+00:00
+    pid=4193 span=272.9d  n=101970  2023-09-01 21:12:35+00:00 → 2024-05-31 19:17:35+00:00
+    pid=4176 span=267.0d  n=24662  2023-08-31 18:18:35+00:00 → 2024-05-24 19:03:35+00:00
+    pid=4169 span=258.9d  n=109255  2023-09-01 21:12:35+00:00 → 2024-05-17 18:08:35+00:00
+
+  stress: 63 participants with span>60d
+    pid=4364 span=397.0d  n=105156  2023-09-01 21:12:35+00:00 → 2024-10-02 21:43:35+00:00
+    pid=4340 span=381.9d  n=102153  2023-09-01 21:12:35+00:00 → 2024-09-17 19:35:35+00:00
+    pid=1652 span=299.1d  n=20214  2024-04-14 17:02:35+00:00 → 2025-02-07 18:15:35+00:00
+    pid=4186 span=273.1d  n=43364  2023-08-31 20:07:35+00:00 → 2024-05-30 21:22:35+00:00
+    pid=4193 span=272.9d  n=102043  2023-09-01 21:12:35+00:00 → 2024-05-31 19:17:35+00:00
+    pid=4176 span=267.0d  n=24663  2023-08-31 18:18:35+00:00 → 2024-05-24 19:03:35+00:00
+    pid=4169 span=258.9d  n=109309  2023-09-01 21:12:35+00:00 → 2024-05-17 18:08:35+00:00
+    pid=4167 span=257.0d  n=41842  2023-08-31 20:07:35+00:00 → 2024-05-14 21:04:35+00:00
+
+================================================================================
+  OBSERVATION source_value top 80 (find survey features + leakage)
+================================================================================
+observation rows: 707,126, unique person: 2280
+unique source_values: 361
+
+top 80 observation_source_value:
+                  mhoccur_mi, Heart attack:   2,280  (pids=2280)
+  mhoccur_cvdot, Other heart issues (Examples: pace:   2,280  (pids=2280)
+                      mhoccur_strk, Stroke:   2,280  (pids=2280)
+      mhoccur_clsh, High blood cholesterol:   2,280  (pids=2280)
+          mhoccur_hbp, High blood pressure:   2,280  (pids=2280)
+  mhoccur_ua, Urinary problems (Examples: urinary t:   2,280  (pids=2280)
+           mhoccur_ear, Hearing impairment:   2,280  (pids=2280)
+  mhoccur_pdr, Diabetic retinopathy (in one or both:   2,280  (pids=2280)
+               mhterm_dm1, Type I Diabetes:   2,280  (pids=2280)
+            cesmpdat, CES-D-10 survey date:   2,280  (pids=2280)
+  dmgcmpdat, Demographic survey date (date survey/f:   2,280  (pids=2280)
+           dmlcmpdat, Diabetes survey date:   2,280  (pids=2280)
+              mhcmpdat, Health survey date:   2,280  (pids=2280)
+  mhoccur_circ, Circulation problems (Examples: art:   2,280  (pids=2280)
+           mhoccur_lbp, Low blood pressure:   2,280  (pids=2280)
+           mhoccur_pd, Parkinson's disease:   2,280  (pids=2280)
+  mhoccur_ad, Dementia (Examples: Alzheimer's Disea:   2,280  (pids=2280)
+  mhoccur_cogn, Mild cognitive impairment (known as:   2,280  (pids=2280)
+            mhoccur_ms, Multiple sclerosis:   2,280  (pids=2280)
+  mhoccur_cns, Other neurological conditions:   2,280  (pids=2280)
+        mhoccur_ra, Arthritis (joint pain):   2,280  (pids=2280)
+                  mhoccur_oa, Osteoporosis:   2,280  (pids=2280)
+             mhoccur_ca, Cancer (any type):   2,280  (pids=2280)
+  mhoccur_plm, Chronic pulmonary (lung) problems (E:   2,280  (pids=2280)
+  mhoccur_gi, Digestive problems (Examples: stomach:   2,280  (pids=2280)
+              mhoccur_rnl, Kidney problems:   2,280  (pids=2280)
+                      mhoccur_obs, Obesity:   2,280  (pids=2280)
+  mhoccur_glc, Glaucoma (in one or both eyes):   2,280  (pids=2280)
+  mhoccur_amd, Age-related macular degeneration (AM:   2,280  (pids=2280)
+  mhoccur_crt, Cataracts (in one or both eyes):   2,280  (pids=2280)
+  mhoccur_rvo, Retinal vascular occlusion ("stroke :   2,280  (pids=2280)
+  mhoccur_ded, Dry eye (in one or both eyes):   2,280  (pids=2280)
+         viacmpdat, Ophthalmic survey date:   2,280  (pids=2280)
+  pacmpdat, Date Assessment Performed --- Populated:   2,280  (pids=2280)
+  pxsficmpdat, PhenX Food Insecurity survey date:   2,280  (pids=2280)
+         px270301_metadata, PhenX MetaData:   2,280  (pids=2280)
+  pxrdcmpdat, PhenX Racial/Ethnic Discrimination su:   2,280  (pids=2280)
+  px281501_metadata, PhenX Racial/Ethnic MetaData:   2,280  (pids=2280)
+  scrcmpdat, Screening survey date (date survey/for:   2,280  (pids=2280)
+  mh_a1c, Elevated A1C levels (elevated blood sugar:   2,280  (pids=2280)
+              mhterm_dm2, Type II Diabetes:   2,280  (pids=2280)
+  visdat, Planned date & time of in-person visit:   2,280  (pids=2280)
+       sucmpdat, Substance use survey date:   2,280  (pids=2280)
+        pxrd1, How often in the past year?:   2,280  (pids=2280)
+     pxrd2, How often in your entire life?:   2,280  (pids=2280)
+        pxrd4, How often in the past year?:   2,280  (pids=2280)
+     pxrd5, How often in your entire life?:   2,280  (pids=2280)
+        pxrd7, How often in the past year?:   2,280  (pids=2280)
+     pxrd8, How often in your entire life?:   2,280  (pids=2280)
+       pxrd10, How often in the past year?:   2,280  (pids=2280)
+    pxrd11, How often in your entire life?:   2,280  (pids=2280)
+       pxrd13, How often in the past year?:   2,280  (pids=2280)
+    pxrd14, How often in your entire life?:   2,280  (pids=2280)
+       pxrd16, How often in the past year?:   2,280  (pids=2280)
+    pxrd17, How often in your entire life?:   2,280  (pids=2280)
+       pxrd22, How often in the past year?:   2,280  (pids=2280)
+    pxrd23, How often in your entire life?:   2,280  (pids=2280)
+       pxrd25, How often in the past year?:   2,280  (pids=2280)
+    pxrd26, How often in your entire life?:   2,280  (pids=2280)
+       pxrd28, How often in the past year?:   2,280  (pids=2280)
+    pxrd29, How often in your entire life?:   2,280  (pids=2280)
+       pxrd31, How often in the past year?:   2,280  (pids=2280)
+    pxrd32, How often in your entire life?:   2,280  (pids=2280)
+       pxrd34, How often in the past year?:   2,280  (pids=2280)
+    pxrd35, How often in your entire life?:   2,280  (pids=2280)
+       pxrd37, How often in the past year?:   2,280  (pids=2280)
+    pxrd38, How often in your entire life?:   2,280  (pids=2280)
+       pxrd40, How often in the past year?:   2,280  (pids=2280)
+    pxrd41, How often in your entire life?:   2,280  (pids=2280)
+       pxrd43, How often in the past year?:   2,280  (pids=2280)
+    pxrd44, How often in your entire life?:   2,280  (pids=2280)
+       pxrd46, How often in the past year?:   2,280  (pids=2280)
+    pxrd47, How often in your entire life?:   2,280  (pids=2280)
+       pxrd49, How often in the past year?:   2,280  (pids=2280)
+    pxrd50, How often in your entire life?:   2,280  (pids=2280)
+                 pxrd52, In the Past Year?:   2,280  (pids=2280)
+              pxrd53, In your entire life?:   2,280  (pids=2280)
+  suvpkncf1, Have you ever vaped or used e-cigarett:   2,280  (pids=2280)
+  dmlvex, In a typical week, how often do you engag:   2,280  (pids=2280)
+  dmlhex, How often would you say that you engage i:   2,280  (pids=2280)
+
+--- leakage/retinal substring scan in observation_source_value ---
+  'a1c': ['mh_a1c, Elevated A1C levels (elevated blood sugar', 'cmtrt_a1c, Do you take pills to control your A1C ']
+  'insulin': ['cmtrt_insln, Do you inject insulin to control you']
+  'diabet': ['mhoccur_pdr, Diabetic retinopathy (in one or both', 'mhterm_dm1, Type I Diabetes', 'dmlcmpdat, Diabetes survey date', 'dmlstartts, Diabetes Survey Started Timestamp (fr', 'dmlcmpts, Diabetes Survey Completed Timestamp (fr', 'mhterm_dm2, Type II Diabetes', 'mhterm_predm, Pre-diabetes', 'paid_eng, Feeling that diabetes is taking up too ', 'paid_cml, Coping with complications of diabetes']
+  'predm': ['mhterm_predm, Pre-diabetes']
+  'dm1': ['rtci_odm1, Cirrus-Mac Cube-512x128-OCT', 'rtma_odm1, M2-Mac 6x6-360x360-(rep3)-OCTA', 'rttr_odm1, Triton-Macula 6x6-OCTA', 'mhterm_dm1, Type I Diabetes']
+  'dm2': ['rtci_odm2, Cirrus-Macula 6x6-OCTA', 'rttr_odm2, Triton-Macula 12x12-OCTA', 'mhterm_dm2, Type II Diabetes', 'fh_dm2sbsp, If yes, please check all that apply:', 'fh_dm2pt, Were either of your parents diagnosed w', 'fh_dm2sb, Has a sibling been diagnosed with Type ', 'fh_dm2ptsp, If yes, which parent?']
+  'mh_': ['mh_a1c, Elevated A1C levels (elevated blood sugar', 'mh_dm_age, If yes, at what age were you first dia']
+  'cmtrt': ['cmtrt_insln, Do you inject insulin to control you', 'cmtrt_lfst, Do you use lifestyle changes to contr', 'cmtrt_a1c, Do you take pills to control your A1C ', 'cmtrt_glcs, Do you use other injections to contro']
+  'cmtrt_': ['cmtrt_insln, Do you inject insulin to control you', 'cmtrt_lfst, Do you use lifestyle changes to contr', 'cmtrt_a1c, Do you take pills to control your A1C ', 'cmtrt_glcs, Do you use other injections to contro']
+  'mhoccur': ['mhoccur_mi, Heart attack', 'mhoccur_cvdot, Other heart issues (Examples: pace', 'mhoccur_strk, Stroke', 'mhoccur_clsh, High blood cholesterol', 'mhoccur_hbp, High blood pressure', 'mhoccur_ua, Urinary problems (Examples: urinary t', 'mhoccur_ear, Hearing impairment', 'mhoccur_pdr, Diabetic retinopathy (in one or both', 'mhoccur_circ, Circulation problems (Examples: art', 'mhoccur_lbp, Low blood pressure', "mhoccur_pd, Parkinson's disease", "mhoccur_ad, Dementia (Examples: Alzheimer's Disea"]
+  'paidscore': ['paidscore, PAID score']
+  'cestl': ['cestl, CESD-10 Score']
+  'ces': ['ces9, I felt lonely', 'cesmpdat, CES-D-10 survey date', 'cesstartts, CES-D-10 Survey Started Timestamp (fr', 'px270101_metadata, PhenX Health Care Access MetaD', 'pxne14, Places for bicycling (such as bike paths)', 'pxne17, There are many places to go within easy w', "ces1, I was bothered by things that usually don't", 'ces2, I had trouble keeping my mind on what I was', 'ces3, I felt depressed', 'ces4, I felt that everything I did was an effort', 'ces5, I felt hopeful about the future', 'ces6, I felt fearful']
+  'fh_dm': ['fh_dm2sbsp, If yes, please check all that apply:', 'fh_dm2pt, Were either of your parents diagnosed w', 'fh_dm2sb, Has a sibling been diagnosed with Type ', 'fh_dm2ptsp, If yes, which parent?']
+  'via': ['viaocmpdat, Date BCVA performed', 'viacmpdat, Ophthalmic survey date', 'viastartts, Ophthalmic Survey Started Timestamp (', 'viacmpts, Ophthalmic Survey Completed Timestamp (', 'viaomthd, Method used to complete form', 'via1, How much difficulty, if any, do you have in', 'via2, How much difficulty, if any, do you have re', 'via6, When was the last time you had an eye exam ', 'via3, Because of your eyesight, how much difficul', 'via4, When was the last time you had your eyes ex', 'via5, You have indicated that you have not seen a']
+  'rt_': ['rt_dat, Assessment Date', 'cmtrt_insln, Do you inject insulin to control you', 'cmtrt_lfst, Do you use lifestyle changes to contr', 'cmtrt_a1c, Do you take pills to control your A1C ', 'cmtrt_glcs, Do you use other injections to contro']
+  'mlcs': ['mlcscmpdat, Date procedure performed']
+  'plcs': ['plcscmpdat, Date procedure performed']
+  'dmg': ['dmgcmpdat, Demographic survey date (date survey/f', 'dmgstartts, Demographics Survey Started Timestamp', 'dmgcmpts, Demograhics Survey Completed Timestamp ']
+  'susmk': ['susmkncf, Have you smoked at least 100 cigarettes', 'susmkstoage, How many total years have you smoked', 'susmkstaage, At what age did you start smoking? (', 'susmkcdur, Do you smoke now?', 'susmkdosfr, On average how many cigarettes do/did']
+  'sualc': ['sualcage, At what age did you start drinking alco', 'sualckncf, Have you ever consumed alcohol?', 'sualcdrv, Do you drive after having a drink, even']
+  'diet': ['dietstartts, Dietary Survey Start Timestamp (from', 'diet5, How many times a week did you eat beans (l', 'diet6, How many times a week did you eat regular ', 'diet7, How many times a week did you eat desserts', 'diet8, How much margarine, butter, or meat fat do', 'diet9, How many servings of fruit juice did you d', 'dietscore, Diet score', 'diet1, How many times a week did you eat fast foo', 'diet2, How many servings of fruit did you eat eac', 'diet3, How many servings of vegetables did you ea', 'diet4, How many regular sodas or glasses of sweet', 'food_insecurity_change_diet_frequency, How often ']
+  'pxfi': ['pxfistartts, PhenX Food Insecurity Survey Started', 'pxfi1, The first statement is, "The food that (I/', 'pxfi2, "(I/we) couldn\'t afford to eat balanced me', 'pxfi3, In the last year, did you and/or other adu', 'pxfi4, In the last 12 months, did you ever eat le', 'pxfi5, In the last 12 months, were you ever hungr']
+
+================================================================================
+  MEASUREMENT source_value top 60 (find lab leakage + retinal)
+================================================================================
+measurement rows: 242,279, unique person: 2280
+unique source_values: 108
+        bp1_sysbp_vsorres, Systolic (mmHg):   2,278  (pids=2278)
+       bp1_diabp_vsorres, Diastolic (mmHg):   2,278  (pids=2278)
+           pulse_vsorres, Heart Rate (bpm):   2,278  (pids=2278)
+        weight_vsorres, Weight (kilograms):   2,274  (pids=2274)
+               height_vsorres, Height (cm):   2,273  (pids=2273)
+                          bmi_vsorres, BMI:   2,273  (pids=2273)
+        bp2_sysbp_vsorres, Systolic (mmHg):   2,273  (pids=2273)
+       bp2_diabp_vsorres, Diastolic (mmHg):   2,273  (pids=2273)
+         pulse_vsorres_2, Heart Rate (bpm):   2,273  (pids=2273)
+   waist_vsorres, Waist Circumference (cm):   2,269  (pids=2269)
+               mssrffl, Right Foot - Felt::   2,268  (pids=2268)
+                msslffl, Left Foot - Felt::   2,268  (pids=2268)
+       hip_vsorres, Hip Circumference (cm):   2,268  (pids=2268)
+     whr_vsorres, Waist to Hip Ratio (WHR):   2,267  (pids=2267)
+               cube_visuospatial_executive:   2,267  (pids=2265)
+                   moca_combined_mis_score:   2,267  (pids=2265)
+                          moca_total_score:   2,267  (pids=2265)
+  plcsodfcl, OD: Value of final correct letter:   2,266  (pids=2266)
+  plcsodmiss, OD: Number of misses prior to stoppin:   2,266  (pids=2266)
+   plcsodlog, OD: Log Contrast Sensitivity:   2,266  (pids=2266)
+                          moca_orientation:   2,266  (pids=2265)
+                               subtraction:   2,266  (pids=2265)
+                                repetition:   2,266  (pids=2265)
+                          fluency_language:   2,266  (pids=2265)
+              clock_visuospatial_executive:   2,266  (pids=2265)
+               delayed_recall_with_no_clue:   2,266  (pids=2265)
+                                 digitspan:   2,265  (pids=2265)
+                                   lettera:   2,265  (pids=2265)
+             trails_visuospatial_executive:   2,265  (pids=2265)
+                                    naming:   2,265  (pids=2265)
+                          moca_abstraction:   2,265  (pids=2265)
+  mlcsodfcl, OD: Value of final correct letter:   2,262  (pids=2262)
+  mlcsodmiss, OD: Number of misses prior to stoppin:   2,262  (pids=2262)
+   mlcsodlog, OD: Log Contrast Sensitivity:   2,262  (pids=2262)
+  plcsosfcl, OS: Value of final correct letter:   2,261  (pids=2261)
+  plcsosmiss, OS: Number of misses prior to stoppin:   2,261  (pids=2261)
+   plcsoslog, OS: Log Contrast Sensitivity:   2,261  (pids=2261)
+                             memory_trial1:   2,258  (pids=2257)
+  viaodplog, VA Letter Score - Photopic VA - OD:   2,257  (pids=2257)
+     viaodpscore, Photopic LogMAR OD Score:   2,257  (pids=2257)
+  viaodmlog, LLVA Letter Score - Mesopic VA - OD:   2,257  (pids=2257)
+      viaodmscore, Mesopic LogMAR OD Score:   2,257  (pids=2257)
+                             memory_trial2:   2,257  (pids=2257)
+  mlcsosfcl, OS: Value of final correct letter:   2,255  (pids=2255)
+  mlcsosmiss, OS: Number of misses prior to stoppin:   2,255  (pids=2255)
+   mlcsoslog, OS: Log Contrast Sensitivity:   2,255  (pids=2255)
+  viaosplog, VA Letter Score - Photopic VA - OS:   2,251  (pids=2251)
+     viaospscore, Photopic LogMAR OS Score:   2,251  (pids=2251)
+  viaosmlog, LLVA Letter Score - Mesopic VA - OS:   2,251  (pids=2251)
+      viaosmscore, Mesopic LogMAR OS Score:   2,251  (pids=2251)
+     viaodsph, OD - Autorefractor - Sphere:   2,240  (pids=2240)
+       viaodaxi, OD - Autorefractor - Axis:   2,239  (pids=2239)
+   viaodcyl, OD - Autorefractor - Cylinder:   2,238  (pids=2238)
+     viaossph, OS - Autorefractor - Sphere:   2,234  (pids=2234)
+  import_nt_probnp, Natriuretic peptide.B prohormon:   2,233  (pids=2233)
+  import_troponin_t, Troponin T.cardiac [Mass/volum:   2,233  (pids=2233)
+  import_crp_hs, C reactive protein [Mass/volume] i:   2,233  (pids=2233)
+  import_total_cholesterol, Cholesterol [Mass/volum:   2,233  (pids=2233)
+  import_triglycerides, Triglyceride [Mass/volume] :   2,233  (pids=2233)
+  import_hdl_cholesterol, Cholesterol in HDL [Mass/:   2,233  (pids=2233)
+
+--- leakage/retinal substring scan in measurement_source_value ---
+  'hba1c': ['import_hba1c, Hemoglobin A1c/Hemoglobin.total in ']
+  'a1c': ['lbscat_a1c, Hemoglobin - g/dL', 'import_hba1c, Hemoglobin A1c/Hemoglobin.total in ']
+  'glucose': ['import_glucose, Glucose [Mass/volume] in Serum or']
+  'insulin': ['import_insulin, Insulin [Units/volume] in Serum o']
+  'c_peptide': ['import_c_peptide, C peptide [Mass/volume] in Seru']
+  'via': ['viaodplog, VA Letter Score - Photopic VA - OD', 'viaosplog, VA Letter Score - Photopic VA - OS', 'viaodpscore, Photopic LogMAR OD Score', 'viaospscore, Photopic LogMAR OS Score', 'viaodmlog, LLVA Letter Score - Mesopic VA - OD', 'viaosmlog, LLVA Letter Score - Mesopic VA - OS', 'viaodmscore, Mesopic LogMAR OD Score', 'viaosmscore, Mesopic LogMAR OS Score', 'viaodsph, OD - Autorefractor - Sphere', 'viaodcyl, OD - Autorefractor - Cylinder', 'viaodaxi, OD - Autorefractor - Axis', 'viaossph, OS - Autorefractor - Sphere']
+  'mlcs': ['mlcsodfcl, OD: Value of final correct letter', 'mlcsodmiss, OD: Number of misses prior to stoppin', 'mlcsodlog, OD: Log Contrast Sensitivity', 'mlcsosfcl, OS: Value of final correct letter', 'mlcsosmiss, OS: Number of misses prior to stoppin', 'mlcsoslog, OS: Log Contrast Sensitivity']
+  'plcs': ['plcsodfcl, OD: Value of final correct letter', 'plcsodmiss, OD: Number of misses prior to stoppin', 'plcsodlog, OD: Log Contrast Sensitivity', 'plcsosfcl, OS: Value of final correct letter', 'plcsosmiss, OS: Number of misses prior to stoppin', 'plcsoslog, OS: Log Contrast Sensitivity']
+  'mssrf': ['mssrffl, Right Foot - Felt:']
+  'bmi': ['bmi_vsorres, BMI']
+  'weight': ['weight_vsorres, Weight (kilograms)']
+  'waist': ['waist_vsorres, Waist Circumference (cm)', 'whr_vsorres, Waist to Hip Ratio (WHR)']
+  'height': ['height_vsorres, Height (cm)']
+  'bp': ['bp1_sysbp_vsorres, Systolic (mmHg)', 'bp1_diabp_vsorres, Diastolic (mmHg)', 'pulse_vsorres, Heart Rate (bpm)', 'bp2_sysbp_vsorres, Systolic (mmHg)', 'bp2_diabp_vsorres, Diastolic (mmHg)', 'pulse_vsorres_2, Heart Rate (bpm)']
+  'chol': ['import_total_cholesterol, Cholesterol [Mass/volum', 'import_hdl_cholesterol, Cholesterol in HDL [Mass/', 'import_ldl_cholesterol, Cholesterol in LDL [Mass/']
+  'ldl': ['import_ldl_cholesterol, Cholesterol in LDL [Mass/']
+  'hdl': ['import_hdl_cholesterol, Cholesterol in HDL [Mass/']
+  'trig': ['import_triglycerides, Triglyceride [Mass/volume] ']
+  'systol': ['bp1_sysbp_vsorres, Systolic (mmHg)', 'bp2_sysbp_vsorres, Systolic (mmHg)']
+  'diastol': ['bp1_diabp_vsorres, Diastolic (mmHg)', 'bp2_diabp_vsorres, Diastolic (mmHg)']
+
+================================================================================
+  SpO2 >100 and HR duplicate-timestamp detail
+================================================================================
+SpO2 >100: 191  | <50: 0  | ==0: 0  | NaN: 2670
+SpO2 value_counts top 15: {85.0: 74137, 86.0: 101678, 87.0: 133872, 88.0: 169604, 89.0: 210558, 90.0: 252988, 91.0: 289090, 92.0: 315702, 93.0: 328537, 94.0: 311371, 95.0: 253650, 96.0: 175005, 97.0: 105926, 98.0: 59183, 100.0: 58133}
+
+HR duplicates in 400 participants: 4 pids with dup-timestamps, 10825 dup rows total
+
+================================================================================
+  CROSS-MODALITY INTERSECTION (fixed: copy PIDS before &=)
+================================================================================
+     hr: 2104/2280 (92.3%)
+  stress: 2112/2280 (92.6%)
+     rr: 2113/2280 (92.7%)
+    spo: 1638/2280 (71.8%)
+    cal: 1994/2280 (87.5%)
+    slp: 2109/2280 (92.5%)
+    act: 2118/2280 (92.9%)
+    cgm: 2245/2280 (98.5%)
+
+  hr∩stress∩sleep (wearable core):              2052/2280 (90.0%)
+  hr∩stress∩rr∩sleep:                            2052/2280 (90.0%)
+  hr∩stress∩rr∩sleep∩cgm (aux pool):             2034/2280 (89.2%)
+  hr∩stress∩slp∩act∩cgm (no RR):                 2034/2280 (89.2%)
+  all 7 garmin + cgm:                            1610/2280 (70.6%)
+
+================================================================================
+  LABEL × SPLIT exact counts + insulin scarcity
+================================================================================
+recommended_split  test  train  val
+label                              
+0                    88    600   88
+1                    88    384   88
+2                    90    487  109
+3                    86    105   67
+
+insulin (label=3): train=105 val=67 test=86  total=258
+  → train insulin n=105 is the binding constraint for the 4-class model
+  train class proportions: 0:600  1:384  2:487  3:105
+  val class proportions: 0:88  1:88  2:109  3:67
+  test class proportions: 0:88  1:88  2:90  3:86
+
+================================================================================
+  CLINICAL_SITE → TIMEZONE mapping
+================================================================================
+sites: {'UAB': 800, 'UW': 798, 'UCSD': 682}
+mapped: {'UAB': 'US/Central', 'UW': 'US/Pacific', 'UCSD': 'US/Pacific'}
+nulls in clinical_site: 0
+
+site × label:
+label            0    1    2    3
+clinical_site                    
+UAB            238  148  277  137
+UCSD           201  201  219   61
+UW             337  211  190   60

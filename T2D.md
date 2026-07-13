@@ -1,33 +1,94 @@
 # T2D — ML Project Notes
 
-Working notes for the ML side. For the data layout/schemas/access, see `DATA_STRUCTURE.md`.
+Working notes for the ML side. Canonical detail lives in the other project docs — this is the
+1-page "why."
 
-## Objective & two-stage idea
+| Doc | Role |
+|---|---|
+| `DATA_STRUCTURE.md` | Layout, schemas, access |
+| `DATA_AUDIT.md` | Empirical audit + cleaning checklist (source of truth for data facts) |
+| `FEATURES.md` | Feature inventory, leakage rules, GREEN core |
+| `Training.md` | Methodology / Path A–B / build order (source of truth for ML) |
+| `COMPUTE.md` | Machines, Drive, GPU placement |
 
-Predict Type 2 Diabetes (T2D) from non-invasive wearable data (Garmin Vivosmart 5).
+## Objective
 
-- **Stage 1 — glucose emulator:** learn to predict CGM blood-glucose from wearable signals (heart_rate, physical_activity, sleep, stress, oxygen_saturation, respiratory_rate). Dexcom CGM is the supervision target, used **only at training**.
-- **Stage 2 — T2D predictor:** predict the T2D label from wearable data + the emulated glucose signal.
-- **Deployment motivation:** a smartwatch has wearables but no CGM — the emulator supplies a glucose proxy at inference, so the T2D predictor runs watch-side without invasive sensors.
-- **Label** (in `metadata/participants.parquet`): `0`=healthy, `1`=pre-diabetes, `2`=oral-medication, `3`=insulin-dependent.
+Predict Type 2 Diabetes **severity** (risk stratification, not early diagnosis) from non-invasive
+Garmin Vivosmart 5 wearables.
 
-## Diasense — teammate's baseline to beat
+- **Label** (`metadata/participants.parquet` → `label`): `0` healthy → `1` pre-diabetes →
+  `2` oral/non-insulin injectable → `3` insulin-dependent.
+- **Paper claim:** **watch-only.** Onboarding/self-report is the deployable config (deployment
+  section), not the scientific claim.
+- **CGM (Dexcom)** is invasive → **training-time privileged supervision only** (LUPI). At inference
+  there is no CGM.
+- **Post-diagnosis caveat:** wearables were recorded after participants knew their status →
+  behavior may reflect lifestyle change. Limits screening external validity; discuss honestly.
+
+### Two-stage / aux idea (Path B)
+
+Historical framing that still motivates deployment:
+
+1. **Glucose auxiliary:** learn glycemic structure from wearables under CGM supervision (train only).
+2. **T2D predictor:** use wearables (+ glucose-shaped representation at train time) for the 4-class label.
+
+**Headline formulation** (see `Training.md`): not plain "regress glucose then feed," and not
+Diasense logit-KD. Primary novelty candidate is **B4 — seq2seq full-CGM-trajectory teacher → T2D
+head**, with **representation distillation under LUPI**. Path A (direct LightGBM+CatBoost on
+summary features) is built first and is the floor every aux result is measured against.
+
+## Diasense — teammate baseline to beat / stay distinct from
 
 - Repo: `github.com/mannangrover/Diasense`
-- **Approach:** knowledge distillation — a CGM teacher (wearable+CGM LSTM) distills soft predictions into a wearable+survey student. At inference, no CGM. This is a more principled variant of the explicit emulator above (leakage handled via out-of-fold teacher predictions). Worth considering over a plain "regress glucose then feed" design.
-- **Features:** 41 wearable features/day (HR stats, HRV/RMSSD, circadian HR amplitude, sleep efficiency/WASO, activity bouts, SpO₂ desaturation events) + 27 survey features (demographics, comorbidities, CES-D/PAID, family history, lifestyle — extractable from `clinical/observation.parquet`).
-- **Models:** LSTM+Attention + Optuna-tuned LightGBM ensemble.
-- **Results:** 2-AUC 0.7937, 4-AUC 0.7412 (n=1,586 after dead-sensor/coverage filtering).
-- **Key findings:** survey-only features are very predictive (≈ wearable LSTM); HRV, circadian HR amplitude, and sleep efficiency are the strongest wearable predictors; KD successfully transfers glucose-correlated signal.
-- Your contribution should be a **distinct delta** (e.g., a better distillation target, end-to-end sequence modeling that beats hand features, or the watch-deployment angle) — not a redo of the above.
+- **Approach:** knowledge distillation — CGM teacher (wearable+CGM LSTM) distills **soft class
+  logits** into a wearable+survey student. Inference: no CGM. Out-of-fold teacher predictions
+  handle leakage. This is **B3** in our inventory — strong baseline, **not** our contribution.
+- **Features:** 41 wearable/day + 27 survey (from `clinical/observation.parquet` long-format
+  source_values).
+- **Models:** LSTM+Attention + Optuna LightGBM ensemble.
+- **Results (n=1,586 after coverage filter; random 5-fold — not `recommended_split`):**
+  - Ensemble 2-AUC **0.7937**, 4-AUC **0.7412**
+  - Wearable+KD-only 2-AUC **0.6846** — the 0.6846→0.7937 jump is overwhelmingly the survey block
+  - Survey-only LightGBM 4-AUC **0.6963** beat wearable-only LSTM **0.6725**
+- **Key findings:** survey ≈ wearable; HRV/circadian-HR-amplitude/sleep-efficiency strongest
+  wearable predictors; KD transfers glucose-correlated signal; multi-task on scalar CGM summaries
+  was tried and abandoned (+0.003 4-AUC, confounded backbone).
+- **Our delta must be a different formulation** (B4 trajectory teacher, rep-distill, SSL+aux,
+  attention fusion) or the deployment angle — not a redo of logit-KD + ensemble.
 
-## Data / training pool
+## Data / training pools
 
-- 2,280 participants total (full variant).
-- 2,245 have Dexcom CGM; **~1,975–2,085 have wearable ∩ dexcom** (the glucose-emulator supervision pool — the intersection, varies per modality).
-- Diasense filtered 2,280 → 1,586 on dead-sensor/coverage; expect to filter similarly after masking sentinels.
-- Canonical is on Google Drive at `AI_READI/full/AI_READI/` — layout/schemas/access in `DATA_STRUCTURE.md`.
+Full AI-READI v3.0.0, n=2,280. Empirical numbers from `DATA_AUDIT.md` (not ceilings):
 
-## Training setup note (Drive)
+| Pool | n (approx) | Notes |
+|---|---|---|
+| All labeled (direct T2D ceiling) | 2,280 | label 0/1/2/3 = 776/560/686/258 |
+| Wearable core HR∩stress∩sleep | 2,052 raw → **≤1,983** | after post-sentinel zero-valid removal |
+| Aux HR∩stress∩RR∩sleep∩CGM | 2,034 raw → ≤1,963 → **≤1,921** | after sentinel + ≥24h CGM↔HR overlap |
+| CGM-haves | 2,245 | CGM∩HR raw 2,085; 51 have ≤0h temporal overlap |
+| Diasense-style filtered | ~1,586 | their dead-sensor/coverage cut; re-lock ours post-clean |
 
-Copy the canonical to local disk before training (Colab `/content` or a VM). Drive mounts stall on random access and can hang training loops. The layout is few large files (Drive-friendly), but local disk is still faster — copy once, read locally.
+- **Train insulin n=105** is the binding 4-class constraint (`recommended_split` train/val/test =
+  1576/352/352).
+- **Do not silently restrict the T2D pool to CGM-haves.** Aux is a non-random (CGM-tolerant) subset.
+- **No sex/race** in this release (`person.parquet` demographics blank). Hard onboarding =
+  age/BMI/waist/FH/smoking/BP only.
+- Stress scale is **0–100** (not 0–17). ~63 pids have true year-long wear (truncate policy TBD).
+- Site×label confound (UAB enriched for insulin) → **UTC→local mandatory** before circadian features.
+
+Canonical on Drive: `gdrive_zyrus:AI_READI/{mini|full}/AI_READI/`. Relevant subset also local at
+`data/full/AI_READI/` (~784 MiB). Layout/schemas: `DATA_STRUCTURE.md`. Cleaning plan: `DATA_AUDIT.md` §B.
+
+## Honest performance target
+
+Wearable-only literature ceilings: binary ~0.75–0.86, **4-class ~0.72–0.75**. For this
+mixed-control held-out split expect binary ~0.78–0.82, 4-class ~0.72–0.75. Do **not** anchor on
+~0.92 lab-biomarker (HbA1c/lipids) figures. Real bar: beat matched tabular/sequence baselines
+watch-only, with calibration (Brier + curves), under the SHAP survey-dominance guardrail.
+
+## Training setup note
+
+Copy canonical to local disk before training (Colab `/content` or a VM). Drive mounts stall on
+random access. This machine already has the relevant full subset under `data/full/AI_READI/`.
+Local GPU is non-CUDA (useless for mainstream stacks) — train on Lightning/Modal/Colab; clean/FE
+can stay local. Placement detail: `COMPUTE.md`.
