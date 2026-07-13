@@ -208,6 +208,136 @@ def bootstrap_ci(
     }
 
 
+def _as_binary_labels(y: np.ndarray) -> np.ndarray:
+    y = np.asarray(y).astype(int).ravel()
+    if y.max() > 1:
+        return (y > 0).astype(int)
+    return y
+
+
+def bootstrap_ci_binary(
+    y: np.ndarray,
+    score: np.ndarray,
+    *,
+    n_boot: int = 1000,
+    alpha: float = 0.05,
+    seed: int = 42,
+) -> dict[str, Any]:
+    """Person-bootstrap CI on binary AUC / AUPRC for 1-d scores P(y=1)."""
+    from sklearn.metrics import average_precision_score
+
+    rng = np.random.default_rng(seed)
+    y = _as_binary_labels(y)
+    s = np.asarray(score, dtype=float).ravel()
+    n = len(y)
+    aucs: list[float] = []
+    auprcs: list[float] = []
+    for _ in range(n_boot):
+        idx = rng.integers(0, n, size=n)
+        yb, sb = y[idx], s[idx]
+        if yb.min() == yb.max():
+            continue
+        try:
+            aucs.append(float(roc_auc_score(yb, sb)))
+            auprcs.append(float(average_precision_score(yb, sb)))
+        except Exception:
+            continue
+
+    def _ci(arr: list[float]) -> dict[str, Any]:
+        a = np.asarray(arr, dtype=float)
+        if len(a) == 0:
+            return {
+                "mean": float("nan"),
+                "std": float("nan"),
+                "lo": float("nan"),
+                "hi": float("nan"),
+                "n_boot_ok": 0,
+            }
+        return {
+            "mean": float(a.mean()),
+            "std": float(a.std(ddof=1)) if len(a) > 1 else 0.0,
+            "lo": float(np.quantile(a, alpha / 2)),
+            "hi": float(np.quantile(a, 1 - alpha / 2)),
+            "n_boot_ok": int(len(a)),
+        }
+
+    point_auc = (
+        float(roc_auc_score(y, s)) if y.min() != y.max() else float("nan")
+    )
+    point_auprc = (
+        float(average_precision_score(y, s)) if y.min() != y.max() else float("nan")
+    )
+    return {
+        "binary_auc": _ci(aucs),
+        "binary_auprc": _ci(auprcs),
+        "n_boot_requested": n_boot,
+        "alpha": alpha,
+        "point_binary_auc": point_auc,
+        "point_binary_auprc": point_auprc,
+    }
+
+
+def paired_delta_bootstrap_binary(
+    y: np.ndarray,
+    score_new: np.ndarray,
+    score_parent: np.ndarray,
+    *,
+    n_boot: int = 1000,
+    alpha: float = 0.05,
+    seed: int = 42,
+) -> dict[str, Any]:
+    """Paired person-bootstrap CI on Δ binary AUC = AUC(new) − AUC(parent)."""
+    rng = np.random.default_rng(seed)
+    y = _as_binary_labels(y)
+    s_n = np.asarray(score_new, dtype=float).ravel()
+    s_p = np.asarray(score_parent, dtype=float).ravel()
+    n = len(y)
+    d_auc: list[float] = []
+    for _ in range(n_boot):
+        idx = rng.integers(0, n, size=n)
+        yb = y[idx]
+        if yb.min() == yb.max():
+            continue
+        try:
+            a_n = float(roc_auc_score(yb, s_n[idx]))
+            a_p = float(roc_auc_score(yb, s_p[idx]))
+            d_auc.append(a_n - a_p)
+        except Exception:
+            continue
+
+    def _ci(arr: list[float]) -> dict[str, Any]:
+        a = np.asarray(arr, dtype=float)
+        if len(a) == 0:
+            return {
+                "mean": float("nan"),
+                "lo": float("nan"),
+                "hi": float("nan"),
+                "n_boot_ok": 0,
+                "ci_excludes_zero": False,
+                "ci_lower_gt_zero": False,
+            }
+        lo = float(np.quantile(a, alpha / 2))
+        hi = float(np.quantile(a, 1 - alpha / 2))
+        return {
+            "mean": float(a.mean()),
+            "lo": lo,
+            "hi": hi,
+            "n_boot_ok": int(len(a)),
+            "ci_excludes_zero": bool(lo > 0 or hi < 0),
+            "ci_lower_gt_zero": bool(lo > 0),
+        }
+
+    if y.min() == y.max():
+        point = float("nan")
+    else:
+        point = float(roc_auc_score(y, s_n) - roc_auc_score(y, s_p))
+    return {
+        "delta_binary_auc": {**_ci(d_auc), "point": point},
+        "n_boot_requested": n_boot,
+        "alpha": alpha,
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Path A floor diagnostics")
     ap.add_argument(

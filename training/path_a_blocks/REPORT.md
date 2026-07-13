@@ -161,13 +161,55 @@ onboarding: `whr_vsorres`, `fh_dm2pt`, `waist_vsorres`, `bmi_vsorres`, `fh_dm2sb
 
 ## 7. Next steps (from PATH_AHEAD)
 
-| Priority | Action | Gate |
-|---|---|---|
-| **Next** | **1B** comorbidity HTN-first (`mhoccur_hbp` + high-prevalence keeps) | Same decision bar vs **1A** (not only vs floor) |
-| Then | 1C mood (CES-D / PAID) if 1B passes | SHAP guardrail |
-| Optional | GREEN v2 watch FE to raise *watch-only* floor | ΔAUC ≥ +0.01 on watch-only |
-| Optional | 3-class / binary-primary framing | If class-2 stays dead |
-| Path B | Only after 1B/1C kill gates or explicit stop | Must beat **0.666** watch / report Δ vs **0.699** deployable |
+## 9. Phase 1B comorbidity (2026-07-14)
+
+Locked set: hbp, clsh, mi, strk, cvdot, ra + count; bar vs 1A; required no_hbp sensitivity.
+
+| | 1A | **1B_core** | **1B_no_hbp** |
+|---|---:|---:|---:|
+| Test 4-AUC | 0.699 | **0.7085** | **0.7109** |
+| Binary | 0.749 | **0.778** | **0.769** |
+| ΔAUC vs 1A | — | +0.0098 | +0.0123 |
+| Bootstrap Δ lo>0 | — | **No** | **No** |
+| decision_bar_pass | True (vs floor) | **False** | n/a |
+
+**Verdict (core):** comorbidity risk-factor checklist does **not** clear the bar vs 1A.
+
+**1B plus_complications** (kidney+circulation): test 4-AUC **0.724**, binary **0.790**, Δ+0.025 with bootstrap lo>0 — numerical pass but **not** claim set (consequence markers).
+
+## 10. Phase 1C mood (2026-07-14)
+
+Primary `cestl`+`paidscore` on 1A. Run `mood_scores_20260714_014415`.
+
+| | 1A | **1C** | Δ |
+|---|---:|---:|---:|
+| 4-AUC | 0.699 | **0.738** | **+0.039** |
+| Binary | 0.749 | **0.831** | **+0.082** |
+| decision_bar_pass | — | **True** | |
+
+PAID drives lift (perm 0.038 vs cestl 0.0006). Binary enters honest band (~0.78–0.82); 4-class meets lower literature edge (~0.72–0.75).
+
+**Deployable stack:** watch + onboarding + mood scores. Watch-only paper floor still **0.666**.
+
+### Next steps (superseded by wrap)
+
+See **§11 Phase A wrap** — Path A frozen; next is Path B.
+
+---
+
+## 11. Phase A wrap (2026-07-14) — Path A frozen
+
+Full write-up: **`REPORT_A_WRAP.md`**. Pick: `artifacts/wrap_paper_pick.json`.
+
+| Role | Frozen choice |
+|---|---|
+| Headline watch-only | W0 **0.666 / 0.689** |
+| Secondary tabular | **C1** 0.738 / 0.831 (minimal_S/M failed retention) |
+| Binary in tables | multiclass-derived `1−P0` (dedicated binary HPO never +0.01) |
+| Severity stack | E3a narrative only; no 4-AUC lift over C1 |
+| Next | **Path B** |
+
+Key wrap facts: **paid_only ≈ C1**; **ces_only** fails; **watch+PAID** without onboarding 0.718; binary HPO underperforms derived scores.
 
 ---
 
@@ -182,8 +224,14 @@ export DRI_PRIME=1
 .venv/bin/python -m training.path_a_blocks.diagnostics \
   --floor-run full_20260713_221240 --run-id diag_<id>
 
-# 1A
+# 1A / 1B / 1C
 .venv/bin/python -m training.path_a_blocks.run_1a --run-id onboarding_<id>
+.venv/bin/python -m training.path_a_blocks.run_1b --feature-set core
+.venv/bin/python -m training.path_a_blocks.run_1c --feature-set scores
+
+# Wrap (all pre-registered)
+.venv/bin/python -m training.path_a_blocks.build_minimal_ranks
+.venv/bin/python -m training.path_a_blocks.run_wrap --all
 ```
 
 Deps: `training/path_a_watch/requirements.txt` (or project `.venv` with those pins).

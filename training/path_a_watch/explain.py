@@ -128,3 +128,59 @@ def permutation_on_val(
         "png": str(png_path),
         "top10": s.head(10).to_dict(),
     }
+
+
+def permutation_on_val_binary(
+    model: Any,
+    X_val: pd.DataFrame,
+    y_val: np.ndarray,
+    out_dir: Path,
+    *,
+    seed: int = 42,
+    n_repeats: int = 10,
+    prefix: str = "model",
+) -> dict[str, Any]:
+    """Permutation importance scored by binary AUC on P(y=1)."""
+    from sklearn.metrics import roc_auc_score
+
+    from .models import predict_proba_positive
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+    y = np.asarray(y_val).astype(int).ravel()
+    if y.max() > 1:
+        y = (y > 0).astype(int)
+
+    def _auc_scorer(est, X, y_in):
+        p = predict_proba_positive(est, pd.DataFrame(X, columns=X_val.columns))
+        return float(roc_auc_score(y_in, p))
+
+    r = permutation_importance(
+        model,
+        X_val,
+        y,
+        n_repeats=n_repeats,
+        random_state=seed,
+        scoring=_auc_scorer,
+        n_jobs=1,
+    )
+    s = (
+        pd.Series(r.importances_mean, index=list(X_val.columns))
+        .sort_values(ascending=False)
+        .rename("perm_binary_auc_drop")
+    )
+    csv_path = out_dir / f"{prefix}_perm_importance.csv"
+    s.to_csv(csv_path, header=True)
+
+    plt.figure(figsize=(8, 6))
+    s.head(20).iloc[::-1].plot(kind="barh")
+    plt.title(f"{prefix} permutation Δ binary AUC (top 20)")
+    plt.tight_layout()
+    png_path = out_dir / f"{prefix}_perm_bar.png"
+    plt.savefig(png_path, dpi=120)
+    plt.close()
+
+    return {
+        "csv": str(csv_path),
+        "png": str(png_path),
+        "top10": s.head(10).to_dict(),
+    }

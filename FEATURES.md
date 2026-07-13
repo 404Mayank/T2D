@@ -101,7 +101,8 @@
   Timezone map: UAB→US/Central, UW/UCSD→US/Pacific. **UTC→local is mandatory** before any
   circadian/nocturnal/SRI/RHR/cosinor feature — otherwise site-correlated shift leaks into labels.
 - **Label (full):** 0=776 (34.0%), 1=560 (24.6%), 2=686 (30.1%), 3=258 (11.3%).
-  Split train/val/test = 1576/352/352. **Train insulin n=105** is the binding 4-class constraint.
+  Full-split train/val/test = 1576/352/352 (train insulin 105). **Post-clean wearable_core**
+  train/val/test = **1277/270/277** with **train insulin n=80** (binding Path A constraint).
 - **Duplicates & bad timestamps:** exact + timestamp dups across HR/stress/RR/CGM (pid 1366 is a
   systematic ingestion pathology). pid 4280 RR has a 1991 corrupt timestamp. Dedup + repair before FE.
 - **Modalities are not on a shared grid:** RR ~2× denser than HR; SpO₂/CGM 5-min; sleep/activity

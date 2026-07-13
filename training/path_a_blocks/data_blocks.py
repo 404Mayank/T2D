@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 from training.path_a_watch.data import (
@@ -113,3 +114,285 @@ def make_block_splits(
     feature_set: str = "watch_onboarding",
 ) -> SplitData:
     return make_splits(df, feature_cols, feature_set=feature_set)
+
+
+COMORB_FEATURE_SETS = (
+    "core",
+    "no_hbp",
+    "plus_complications",
+    "plus_obs",
+    "ge5pct",
+)
+
+
+def resolve_comorbidity_binaries(cfg_data: dict[str, Any], feature_set: str) -> list[str]:
+    """Return ordered unique comorbidity binary column names for a 1B feature set."""
+    if feature_set not in COMORB_FEATURE_SETS:
+        raise ValueError(f"unknown comorbidity feature_set={feature_set!r}")
+    core = list(cfg_data["comorbidity_core"])
+    if feature_set == "core":
+        bins = core
+    elif feature_set == "no_hbp":
+        bins = [c for c in core if c != "mhoccur_hbp"]
+    elif feature_set == "plus_complications":
+        bins = core + list(cfg_data["comorbidity_complications"])
+    elif feature_set == "plus_obs":
+        bins = core + list(cfg_data["comorbidity_obs"])
+    else:  # ge5pct
+        bins = core + list(cfg_data.get("comorbidity_ge5pct_extra", []))
+    # dedupe preserve order; strip always-exclude
+    ban = set(cfg_data.get("comorbidity_exclude_always", []))
+    out: list[str] = []
+    for c in bins:
+        if c in ban or c in out:
+            continue
+        out.append(c)
+    if not out:
+        raise AssertionError("empty comorbidity binary list")
+    return out
+
+
+def load_watch_onboarding_comorbidity(
+    repo_root: Path,
+    *,
+    watch_green: str,
+    onboarding: str,
+    comorbidity: str,
+    pool_masks: str,
+    onboarding_keep: list[str],
+    comorbidity_binaries: list[str],
+    expected_n: int = 1824,
+    id_col: str = "person_id",
+    count_col: str = "comorb_count_core",
+) -> tuple[pd.DataFrame, list[str], list[str], list[str], list[str]]:
+    """df, watch_cols, onboard_cols, comorb_feature_cols, all feature_cols.
+
+    comorb_feature_cols = binaries + [count_col].
+    count: sum of binary == 1 (null treated as 0 for counting only).
+    """
+    df, watch_cols, onboard_cols, _ = load_watch_onboarding(
+        repo_root,
+        watch_green=watch_green,
+        onboarding=onboarding,
+        pool_masks=pool_masks,
+        onboarding_keep=onboarding_keep,
+        expected_n=expected_n,
+        id_col=id_col,
+    )
+    comb = pd.read_parquet(_resolve(repo_root, comorbidity))
+    missing = [c for c in comorbidity_binaries if c not in comb.columns]
+    if missing:
+        raise ValueError(f"comorbidity missing cols: {missing}")
+    keep = [id_col] + list(comorbidity_binaries)
+    comb = comb[keep].copy()
+    if comb[id_col].duplicated().any():
+        comb = comb.drop_duplicates(id_col, keep="first")
+
+    n_before = len(df)
+    df = df.merge(comb, on=id_col, how="left")
+    if len(df) != n_before:
+        raise AssertionError("comorbidity merge changed row count")
+    if df[id_col].isin(comb[id_col]).sum() != n_before:
+        # left merge always keeps rows; check coverage
+        pass
+    # every core pid should appear in comorbidity table
+    n_matched = int(df[id_col].isin(set(comb[id_col])).sum())
+    if n_matched != n_before:
+        raise AssertionError(
+            f"comorbidity pid coverage {n_matched}/{n_before} (expected full match)"
+        )
+    covered = df[comorbidity_binaries].notna().any(axis=1).sum()
+    if covered < expected_n * 0.99:
+        raise AssertionError(f"comorbidity non-null coverage too low: {covered}/{expected_n}")
+
+    # engineered count: number of yeses (null → not yes)
+    mat = df[comorbidity_binaries]
+    df[count_col] = (mat == 1).sum(axis=1).astype(np.int16)
+
+    comorb_cols = list(comorbidity_binaries) + [count_col]
+    feature_cols = list(watch_cols) + list(onboard_cols) + comorb_cols
+    for c in feature_cols:
+        if c not in df.columns:
+            raise AssertionError(f"missing feature {c}")
+    return df, list(watch_cols), list(onboard_cols), comorb_cols, feature_cols
+
+
+def block_tags_1b(
+    watch_cols: list[str],
+    onboard_cols: list[str],
+    comorb_cols: list[str],
+) -> dict[str, str]:
+    tags = {c: "watch_green" for c in watch_cols}
+    tags.update({c: "onboarding" for c in onboard_cols})
+    tags.update({c: "comorbidity" for c in comorb_cols})
+    return tags
+
+
+MOOD_FEATURE_SETS = ("scores", "scores_via", "paid_items", "full")
+
+
+def resolve_mood_cols(cfg_data: dict[str, Any], feature_set: str) -> list[str]:
+    if feature_set not in MOOD_FEATURE_SETS:
+        raise ValueError(f"unknown mood feature_set={feature_set!r}")
+    if feature_set == "scores":
+        cols = list(cfg_data["mood_scores"])
+    elif feature_set == "scores_via":
+        cols = list(cfg_data["mood_scores"]) + list(cfg_data["mood_via"])
+    elif feature_set == "paid_items":
+        # items only (no paidscore) for clean item-level SHAP — plan lock
+        cols = list(cfg_data["mood_paid_items"])
+    else:
+        cols = (
+            list(cfg_data["mood_scores"])
+            + list(cfg_data["mood_ces_items"])
+            + list(cfg_data["mood_paid_items"])
+            + list(cfg_data["mood_via"])
+        )
+    out: list[str] = []
+    for c in cols:
+        if c not in out:
+            out.append(c)
+    return out
+
+
+def load_watch_onboarding_mood(
+    repo_root: Path,
+    *,
+    watch_green: str,
+    onboarding: str,
+    mood: str,
+    pool_masks: str,
+    onboarding_keep: list[str],
+    mood_cols: list[str],
+    expected_n: int = 1824,
+    id_col: str = "person_id",
+) -> tuple[pd.DataFrame, list[str], list[str], list[str], list[str]]:
+    """df, watch, onboard, mood_feature_cols, all features."""
+    df, watch_cols, onboard_cols, _ = load_watch_onboarding(
+        repo_root,
+        watch_green=watch_green,
+        onboarding=onboarding,
+        pool_masks=pool_masks,
+        onboarding_keep=onboarding_keep,
+        expected_n=expected_n,
+        id_col=id_col,
+    )
+    md = pd.read_parquet(_resolve(repo_root, mood))
+    missing = [c for c in mood_cols if c not in md.columns]
+    if missing:
+        raise ValueError(f"mood missing cols: {missing}")
+    keep = [id_col] + list(mood_cols)
+    md = md[keep].copy()
+    if md[id_col].duplicated().any():
+        md = md.drop_duplicates(id_col, keep="first")
+    n_before = len(df)
+    df = df.merge(md, on=id_col, how="left")
+    if len(df) != n_before:
+        raise AssertionError("mood merge changed row count")
+    n_matched = int(df[id_col].isin(set(md[id_col])).sum())
+    if n_matched != n_before:
+        raise AssertionError(f"mood pid coverage {n_matched}/{n_before}")
+
+    feature_cols = list(watch_cols) + list(onboard_cols) + list(mood_cols)
+    for c in feature_cols:
+        if c not in df.columns:
+            raise AssertionError(f"missing feature {c}")
+    return df, list(watch_cols), list(onboard_cols), list(mood_cols), feature_cols
+
+
+def block_tags_1c(
+    watch_cols: list[str],
+    onboard_cols: list[str],
+    mood_cols: list[str],
+) -> dict[str, str]:
+    tags = {c: "watch_green" for c in watch_cols}
+    tags.update({c: "onboarding" for c in onboard_cols})
+    tags.update({c: "mood" for c in mood_cols})
+    return tags
+
+
+def load_c1_plus_comorb(
+    repo_root: Path,
+    *,
+    watch_green: str,
+    onboarding: str,
+    mood: str,
+    comorbidity: str,
+    pool_masks: str,
+    onboarding_keep: list[str],
+    mood_cols: list[str],
+    comorbidity_binaries: list[str],
+    expected_n: int = 1824,
+    id_col: str = "person_id",
+) -> tuple[pd.DataFrame, list[str], list[str], list[str], list[str], list[str]]:
+    """C1 matrix + selected comorbidity binaries (NO engineered count).
+
+    Returns df, watch, onboard, mood, comorb_bins, all feature_cols.
+    """
+    df, watch_cols, onboard_cols, mood_feat, _ = load_watch_onboarding_mood(
+        repo_root,
+        watch_green=watch_green,
+        onboarding=onboarding,
+        mood=mood,
+        pool_masks=pool_masks,
+        onboarding_keep=onboarding_keep,
+        mood_cols=mood_cols,
+        expected_n=expected_n,
+        id_col=id_col,
+    )
+    if not comorbidity_binaries:
+        raise AssertionError("empty comorbidity binary list")
+    comb = pd.read_parquet(_resolve(repo_root, comorbidity))
+    missing = [c for c in comorbidity_binaries if c not in comb.columns]
+    if missing:
+        raise ValueError(f"comorbidity missing cols: {missing}")
+    keep = [id_col] + list(comorbidity_binaries)
+    comb = comb[keep].copy()
+    if comb[id_col].duplicated().any():
+        comb = comb.drop_duplicates(id_col, keep="first")
+
+    n_before = len(df)
+    df = df.merge(comb, on=id_col, how="left")
+    if len(df) != n_before:
+        raise AssertionError("comorbidity merge changed row count")
+    n_matched = int(df[id_col].isin(set(comb[id_col])).sum())
+    if n_matched != n_before:
+        raise AssertionError(
+            f"comorbidity pid coverage {n_matched}/{n_before} (expected full match)"
+        )
+
+    comorb_cols = list(comorbidity_binaries)
+    # plan O7: no engineered count column
+    if any(c.startswith("comorb_count") for c in df.columns):
+        # do not auto-add; ignore if present from elsewhere
+        pass
+    feature_cols = (
+        list(watch_cols) + list(onboard_cols) + list(mood_feat) + list(comorb_cols)
+    )
+    for c in feature_cols:
+        if c not in df.columns:
+            raise AssertionError(f"missing feature {c}")
+    return (
+        df,
+        list(watch_cols),
+        list(onboard_cols),
+        list(mood_feat),
+        comorb_cols,
+        feature_cols,
+    )
+
+
+def block_tags_wrap(
+    watch_cols: list[str],
+    onboard_cols: list[str] | None = None,
+    mood_cols: list[str] | None = None,
+    comorb_cols: list[str] | None = None,
+) -> dict[str, str]:
+    tags = {c: "watch_green" for c in watch_cols}
+    if onboard_cols:
+        tags.update({c: "onboarding" for c in onboard_cols})
+    if mood_cols:
+        tags.update({c: "mood" for c in mood_cols})
+    if comorb_cols:
+        tags.update({c: "comorbidity" for c in comorb_cols})
+    return tags

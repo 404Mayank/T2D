@@ -74,6 +74,7 @@ def fit_lgbm(
     y_val: np.ndarray,
     *,
     es_rounds: int,
+    eval_metric: str = "multi_logloss",
 ) -> LGBMClassifier:
     callbacks = [
         lgb.early_stopping(es_rounds, verbose=False),
@@ -83,10 +84,53 @@ def fit_lgbm(
         X_train,
         y_train,
         eval_set=[(X_val, y_val)],
-        eval_metric="multi_logloss",
+        eval_metric=eval_metric,
         callbacks=callbacks,
     )
     return model
+
+
+def make_lgbm_binary(
+    params: dict[str, Any],
+    *,
+    seed: int,
+    n_jobs: int,
+    device: str,
+    n_estimators: int,
+    class_weight: str | dict | None = "balanced",
+) -> LGBMClassifier:
+    """Binary LGBM. Prefer class_weight='balanced' literal — not 4-class weight dicts."""
+    p = dict(params)
+    return LGBMClassifier(
+        objective="binary",
+        class_weight=class_weight,
+        n_estimators=n_estimators,
+        random_state=seed,
+        n_jobs=n_jobs,
+        device=device,
+        verbosity=-1,
+        **p,
+    )
+
+
+def fit_lgbm_binary(
+    model: LGBMClassifier,
+    X_train: pd.DataFrame,
+    y_train: np.ndarray,
+    X_val: pd.DataFrame,
+    y_val: np.ndarray,
+    *,
+    es_rounds: int,
+) -> LGBMClassifier:
+    return fit_lgbm(
+        model,
+        X_train,
+        y_train,
+        X_val,
+        y_val,
+        es_rounds=es_rounds,
+        eval_metric="binary_logloss",
+    )
 
 
 def make_catboost(
@@ -168,6 +212,81 @@ def try_catboost_boosting(
             last_err = e
             continue
     raise RuntimeError(f"CatBoost fit failed for {tried}: {last_err}")
+
+
+def make_catboost_binary(
+    params: dict[str, Any],
+    *,
+    seed: int,
+    n_estimators: int,
+    es_rounds: int,
+    boosting_type: str = "Ordered",
+    auto_class_weights: str = "Balanced",
+    task_type: str = "CPU",
+) -> CatBoostClassifier:
+    p = dict(params)
+    return CatBoostClassifier(
+        loss_function="Logloss",
+        eval_metric="Logloss",
+        iterations=n_estimators,
+        random_seed=seed,
+        auto_class_weights=auto_class_weights,
+        boosting_type=boosting_type,
+        task_type=task_type,
+        early_stopping_rounds=es_rounds,
+        verbose=False,
+        allow_writing_files=False,
+        **p,
+    )
+
+
+def try_catboost_binary(
+    params: dict[str, Any],
+    X_train: pd.DataFrame,
+    y_train: np.ndarray,
+    X_val: pd.DataFrame,
+    y_val: np.ndarray,
+    *,
+    seed: int,
+    n_estimators: int,
+    es_rounds: int,
+    preferred: str = "Ordered",
+    fallback: str = "Plain",
+    auto_class_weights: str = "Balanced",
+    task_type: str = "CPU",
+) -> tuple[CatBoostClassifier, str]:
+    last_err: Exception | None = None
+    tried: list[str] = []
+    for bt in (preferred, fallback):
+        if bt in tried:
+            continue
+        tried.append(bt)
+        try:
+            model = make_catboost_binary(
+                params,
+                seed=seed,
+                n_estimators=n_estimators,
+                es_rounds=es_rounds,
+                boosting_type=bt,
+                auto_class_weights=auto_class_weights,
+                task_type=task_type,
+            )
+            fit_catboost(model, X_train, y_train, X_val, y_val)
+            return model, bt
+        except Exception as e:
+            last_err = e
+            continue
+    raise RuntimeError(f"CatBoost binary fit failed for {tried}: {last_err}")
+
+
+def predict_proba_positive(model: Any, X: pd.DataFrame) -> np.ndarray:
+    """Return 1-d P(y=1) from a binary classifier."""
+    p = predict_proba(model, X)
+    if p.shape[1] == 1:
+        return p[:, 0]
+    if p.shape[1] == 2:
+        return p[:, 1]
+    raise ValueError(f"expected binary proba with 1–2 cols, got {p.shape}")
 
 
 def predict_proba(model: Any, X: pd.DataFrame) -> np.ndarray:

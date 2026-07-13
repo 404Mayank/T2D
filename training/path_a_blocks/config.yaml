@@ -18,11 +18,18 @@ run:
 paths:
   watch_green: data/processed/features/watch_green.parquet
   onboarding: data/processed/features/onboarding.parquet
+  comorbidity: data/processed/features/comorbidity.parquet
+  mood: data/processed/features/mood.parquet
   pool_masks: data/processed/meta/pool_masks.parquet
   artifacts_root: training/path_a_blocks/artifacts
   floor_artifacts: training/path_a_watch/artifacts
   floor_run_id: full_20260713_221240
   floor_model: selected_full_green.joblib
+  # 1A parent for 1B Δ bar
+  parent_1a_run_id: onboarding_20260713_224744
+  # 1C parent for wrap Δ / retention
+  parent_c1_run_id: mood_scores_20260714_014415
+  wrap_ranks: training/path_a_blocks/artifacts/wrap_feature_ranks.json
 
 data:
   expected_n: 1824
@@ -59,6 +66,67 @@ data:
     - age_years_at_interview   # all zeros
     - fh_dm2ptsp               # high missing
     - fh_dm2sbsp               # high missing
+  # 1B comorbidity — see PLAN_1B_COMORBIDITY.md (locked post-critique)
+  comorbidity_core:
+    - mhoccur_hbp
+    - mhoccur_clsh
+    - mhoccur_mi
+    - mhoccur_strk
+    - mhoccur_cvdot
+    - mhoccur_ra
+  comorbidity_complications:
+    - mhoccur_rnl
+    - mhoccur_circ
+  comorbidity_obs:
+    - mhoccur_obs
+  comorbidity_ge5pct_extra:  # plus core; exclude yn/fallot/rare neuro
+    - mhoccur_obs
+    - mhoccur_rnl
+    - mhoccur_plm
+    - mhoccur_crt
+    - mhoccur_ded
+    - mhoccur_gi
+    - mhoccur_ua
+    - mhoccur_fall
+    - mhoccur_ear
+    - mhoccur_cvdot  # already in core; ok if deduped
+    - mhoccur_circ
+    - mhoccur_ca
+    - mhoccur_oa
+    - mhoccur_amd
+    - mhoccur_lbp
+    # mhoccur_cogn excluded: core yes% ~3.2% < 5%
+  comorbidity_exclude_always:
+    - mhoccur_fallot
+    - mhoccur_yn
+    - mhoccur_ad
+    - mhoccur_pd
+    - mhoccur_ms
+  # 1C mood — CES-D total + PAID (scores primary; items sensitivity)
+  mood_scores:
+    - cestl
+    - paidscore
+  mood_paid_items:
+    - paid_cml
+    - paid_dpr
+    - paid_eng
+    - paid_scrd
+    - paid_wr
+  mood_ces_items:
+    - ces1
+    - ces2
+    - ces3
+    - ces4
+    - ces5
+    - ces6
+    - ces7
+    - ces8
+    - ces9
+    - ces10
+  mood_via:
+    - via1
+    - via2
+    - via3
 
 class_weights:
   lightgbm: balanced
@@ -95,4 +163,18 @@ floor_reference:
   test_macro_ovr_auc: 0.6661847329816335
   test_binary_auc: 0.688888888888889
   test_macro_auprc: 0.3915682038854875
+  family: catboost
+
+# Parent for 1B decision bar (asserted against artifact at runtime)
+parent_1a_reference:
+  test_macro_ovr_auc: 0.6986528552445552
+  test_binary_auc: 0.7491869918699188
+  test_macro_auprc: 0.4116173607408395
+  family: catboost
+
+# Parent for wrap experiments (asserted against artifact at runtime)
+parent_c1_reference:
+  test_macro_ovr_auc: 0.7377859791966677
+  test_binary_auc: 0.8308943089430895
+  test_macro_auprc: 0.4687470484302076
   family: catboost

@@ -83,12 +83,13 @@ From `onboarding.parquet` (available now):
 **Then:** 1B comorbidity (HTN-first), not Path B.  
 **If fail:** GREEN v2 FE and/or 3-class/binary reformulation before Path B.
 
-### Later (not this sprint)
+### Later / closed on Path A
 
-- 1B comorbidity → 1C mood → 1D diet  
-- GREEN v2 watch FE  
-- CORN ordinal  
-- Path B only after M1/M2 kill gates (see below)
+- 1B comorbidity → **bar fail** (core); complications sensitivity only  
+- 1C mood → **bar pass** (PAID)  
+- Phase A wrap → minimal/PAID/severity/binary done; **Path A frozen** (`REPORT_A_WRAP.md`)  
+- 1D diet / GREEN v2 / CORN: optional, not required to leave Path A  
+- **Next package work: Path B**
 
 ## 4. Milestones
 
@@ -126,4 +127,8 @@ Decisions log: `DECISIONS.md` in this directory.
 | 2026-07-13 | Watch floor complete (CatBoost test 4-AUC 0.666) |
 | 2026-07-13 | PATH_AHEAD written; `path_a_blocks` started — diagnostics → 1A |
 | 2026-07-13 | Diagnostics done; **1A decision_bar_pass=True** (test 4-AUC 0.699, binary 0.749, Δ+0.033) |
-| next | 1B comorbidity HTN-first *or* reassess milestones |
+| 2026-07-14 | **1B_core decision_bar_pass=False** (0.709); plus_complications 0.724 numerical pass but non-claim |
+| 2026-07-14 | **1C_scores decision_bar_pass=True** (0.738 / binary 0.831, Δ+0.039) — PAID-driven |
+| 2026-07-14 | Phase A wrap plan revised post-critique: `PLAN_A_WRAP.md` |
+| 2026-07-14 | **Wrap complete** (`run_wrap --all`); minimal retention fail → secondary = **C1**; Path A frozen |
+| next | **Path B** (privileged CGM / distillation). See `REPORT_A_WRAP.md` |

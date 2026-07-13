@@ -149,6 +149,45 @@ def full_report(
     return rep
 
 
+def binary_report(
+    y_true: np.ndarray,
+    score: np.ndarray,
+    *,
+    tag: str = "",
+    threshold: float = 0.5,
+) -> dict[str, Any]:
+    """Binary metrics from labels (0/1 or multiclass>0) and P(y=1) scores."""
+    y_raw = _as_int(y_true)
+    # accept multiclass labels by collapsing, or already-binary
+    if y_raw.min() < 0:
+        raise ValueError("negative labels")
+    if y_raw.max() > 1:
+        y = (y_raw > 0).astype(np.int64)
+    else:
+        y = y_raw
+    s = np.asarray(score, dtype=float).ravel()
+    if len(s) != len(y):
+        raise ValueError(f"score length {len(s)} != y length {len(y)}")
+    base_rate = float(y.mean()) if len(y) else float("nan")
+    if y.min() == y.max():
+        auc = float("nan")
+        auprc = float("nan")
+    else:
+        auc = float(roc_auc_score(y, s))
+        auprc = float(average_precision_score(y, s))
+    pred = (s >= threshold).astype(np.int64)
+    return {
+        "tag": tag,
+        "n": int(len(y)),
+        "base_rate": base_rate,
+        "binary_auc": auc,
+        "binary_auprc": auprc,
+        "binary_brier": float(brier_score_loss(y, s)),
+        "threshold": threshold,
+        "accuracy": float((pred == y).mean()) if len(y) else float("nan"),
+    }
+
+
 def select_better(
     current: dict[str, float] | None,
     candidate: dict[str, float],

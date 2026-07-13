@@ -20,7 +20,8 @@
 | `training/path_a_watch/` | Path A **watch-only** GBM floor (scientific claim baseline) |
 | `training/path_a_blocks/` | Path A **block ladder** (diagnostics → +onboarding → …); deployable track |
 | `training/path_a_blocks/PATH_AHEAD.md` | Raise-floor roadmap & gates |
-| `training/path_a_blocks/REPORT.md` | Latest diagnostics + 1A results report |
+| `training/path_a_blocks/REPORT.md` | Ladder progress report |
+| `training/path_a_blocks/REPORT_A_WRAP.md` | **Path A freeze** + wrap analytics |
 | `training/path_a_blocks/DECISIONS.md` | Living decisions log for blocks |
 
 **Authority:** `DATA_AUDIT.md` → `CLEANING.md` → `PROCESSED.md` → `FEATURES.md` → `Training.md`.  
