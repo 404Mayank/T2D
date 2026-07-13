@@ -33,3 +33,15 @@ cd /path/to/T2D
 6. Ordinal logistic baseline; SHAP + permutation on val
 
 CatBoost GPU is CUDA-only → **CPU**. LightGBM may use OpenCL GPU (`lgbm_device: auto`).
+
+## Results (locked floor)
+
+Run `full_20260713_221240` (local `artifacts/`, gitignored):
+
+| Metric | Test |
+|---|---:|
+| 4-class macro-OVR AUC | **0.666** |
+| Binary AUC | **0.689** |
+| Family | CatBoost Ordered |
+
+Block ladder / onboarding: see `../path_a_blocks/REPORT.md`.

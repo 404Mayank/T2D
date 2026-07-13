@@ -408,7 +408,8 @@ Grouped by concern. Severity: 🔴 blocking / must do before any feature enginee
 - [ ] **B8.1** Keep `recommended_split` as the primary split (held-out test is more honest than
   k-fold). **Document** that the parallel attempt used random 5-fold CV, so numbers aren't
   directly comparable.
-- [ ] **B8.2** Acknowledge **train insulin n=105** as the binding constraint; lock the imbalance
+- [x] **B8.2** Binding constraint is **train insulin n=80** on wearable_core (was 105 pre-filter);
+  class weights locked in Path A training. (Historical full-split n=105 still noted in audits.)
   strategy (class weights / focal loss / augmentation) **before** feature selection.
 - [ ] **B8.3** Decide whether to stratify-augment or re-split given train/val imbalance (test is
   balanced). Do not silently merge splits.

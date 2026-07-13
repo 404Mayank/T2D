@@ -64,22 +64,23 @@ with decision_bar_pass (`training/path_a_blocks/REPORT.md`). Next block: comorbi
 
 ## Data / training pools
 
-Full AI-READI v3.0.0, n=2,280. Empirical numbers from `DATA_AUDIT.md` (not ceilings):
+Full AI-READI v3.0.0, n=2,280. **Post-clean Path A defaults** (`PROCESSED.md` / `CLEANING.md`);
+raw ceilings still in `DATA_AUDIT.md`:
 
-| Pool | n (approx) | Notes |
+| Pool | n | Notes |
 |---|---|---|
-| All labeled (direct T2D ceiling) | 2,280 | label 0/1/2/3 = 776/560/686/258 |
-| Wearable core HR∩stress∩sleep | 2,052 raw → **≤1,983** | after post-sentinel zero-valid removal |
-| Aux HR∩stress∩RR∩sleep∩CGM | 2,034 raw → ≤1,963 → **≤1,921** | after sentinel + ≥24h CGM↔HR overlap |
-| CGM-haves | 2,245 | CGM∩HR raw 2,085; 51 have ≤0h temporal overlap |
-| Diasense-style filtered | ~1,586 | their dead-sensor/coverage cut; re-lock ours post-clean |
+| All labeled | 2,280 | label 0/1/2/3 ≈ 776/560/686/258 |
+| **wearable_core / watch_green** | **1824** | Path A default (HR density + stress + sleep≥7) |
+| **aux_eligible** | **1685** | Path B aux pool post-clean + overlap |
+| Diasense-style filtered (historical) | ~1,586 | their cut; **not** our training n |
 
-- **Train insulin n=105** is the binding 4-class constraint (`recommended_split` train/val/test =
-  1576/352/352).
+- **Train insulin n=80** on wearable_core ∩ train (was 105 on full-split before coverage filter).
+  Core train/val/test = **1277 / 270 / 277**.
 - **Do not silently restrict the T2D pool to CGM-haves.** Aux is a non-random (CGM-tolerant) subset.
-- **No sex/race** in this release (`person.parquet` demographics blank). Hard onboarding =
-  age/BMI/waist/FH/smoking/BP only.
-- Stress scale is **0–100** (not 0–17). ~63 pids have true year-long wear (truncate policy TBD).
+- **No sex/race** in this release. Hard onboarding = age/BMI/waist/FH/BP (+ pulse); smoking **not**
+  in current `onboarding.parquet`.
+- Stress scale is **0–100** (not 0–17). Year-long wearers truncated via clean window policy
+  (`CLEANING.md`).
 - Site×label confound (UAB enriched for insulin) → **UTC→local mandatory** before circadian features.
 
 Canonical on Drive: `gdrive_zyrus:AI_READI/{mini|full}/AI_READI/`. Relevant subset also local at
@@ -96,5 +97,6 @@ watch-only, with calibration (Brier + curves), under the SHAP survey-dominance g
 
 Copy canonical to local disk before training (Colab `/content` or a VM). Drive mounts stall on
 random access. This machine already has the relevant full subset under `data/full/AI_READI/`.
-Local GPU is non-CUDA (useless for mainstream stacks) — train on Lightning/Modal/Colab; clean/FE
-can stay local. Placement detail: `COMPUTE.md`.
+Local GPU is AMD (non-CUDA). Path A tabular: LightGBM can use OpenCL on the 5600M
+(`DRI_PRIME=1`); CatBoost stays CPU. Neural Path B still prefers CUDA hosts (Lightning/Modal/Colab).
+Clean/FE stay local. Placement detail: `COMPUTE.md`.

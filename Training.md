@@ -176,7 +176,7 @@ is more robust to per-modality dropout than forcing everything through one share
 teammate fuses via concat → Linear; an attention-fusion ablation is an unfilled architectural cell.
 
 **Generative / time-series augmentation for the minority class.** Class weights / focal loss shape
-the *loss* but add no information. For insulin (full n=258, **train n=105**), especially for
+the *loss* but add no information. For insulin (full n=258, **train n=80** on wearable_core), especially for
 sequence models where data hunger is binding, **time-series augmentation**
 (jitter/scaling/magnitude-warping/permutation) or **SMOTE on summary features** / conditional
 generative on sequences grows the rare-class signal. Controlled experiment specifically for the
@@ -190,10 +190,11 @@ sequence/aux models — not a substitute for locking class weights before featur
 - **Decision bar (pre-registered):** a feature block stays deployable iff ΔAUC **>+1.0** with
   non-overlapping nested-CV CIs **and** stable permutation importance. Below that, dropped
   regardless of SHAP.
-- **Block-ablation hierarchy under nested CV:** watch-only → +hard onboarding (**age, BMI/waist/
-  height, family history, smoking, BP** — **no sex/race**, unavailable in this release) →
-  +comorbidities (HTN+dyslipidemia first, then others ≥5% prevalence or grouped) → +mood
-  (CES-D-10; PAID alongside) → +diet. Report ΔAUC + ΔAUPRC per block with CIs.
+- **Block-ablation hierarchy** (fixed split + person-bootstrap CIs; package `path_a_blocks/`):
+  watch-only → +hard onboarding (**age, BMI/waist/height, family history, BP** — no sex/race;
+  smoking not in current onboarding file) → +comorbidities (HTN+dyslipidemia first) → +mood
+  (CES-D-10; PAID) → +diet. Report ΔAUC + ΔAUPRC per block with CIs.
+  **Status:** watch-only + 1A onboarding **done** (see `training/path_a_blocks/REPORT.md`).
 - Decide the class-imbalance strategy (weights / focal loss) **before** feature selection so
   importance isn't confounded by the loss.
 

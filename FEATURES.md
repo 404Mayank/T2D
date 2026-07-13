@@ -14,7 +14,9 @@
 
 - **Architecture bet (aligned with `Training.md`):**
   1. **Path A direct baseline first** (mandatory floor) — LightGBM + CatBoost on GREEN
-     summary features; nested CV; all label formulations + calibration.
+     summary features; fixed `recommended_split` (+ person-bootstrap CIs for block Δ);
+     multiclass/binary (+ ordinal metrics); calibration diagnostic. **Status:** watch floor +
+     1A onboarding done — `training/path_a_blocks/REPORT.md`.
   2. **Path B headline candidate = B4** — seq2seq full-CGM-trajectory teacher → T2D head,
      with **representation distillation under LUPI** as the novelty delta vs Diasense
      logit-KD. Headline only if it beats direct; else rigorous-direct + negative-result framing.
@@ -282,18 +284,19 @@ timepoint — infeasible); ECG (clinic, deployable-out; upper-bound arm only); e
 
 Canonical training methodology lives in **`Training.md`**. Feature-facing rules only here:
 
-- **Decision bar (pre-registered):** a feature block stays deployable iff ΔAUC **>+1.0** with
-  non-overlapping nested-CV CIs **and** stable permutation importance. Below that, dropped
-  regardless of SHAP.
-- **Block-ablation hierarchy under nested CV:**
-  1. **watch-only** (GREEN wearable summaries)
-  2. **+hard onboarding** — age, BMI/waist/height, family history, smoking, BP
-     (**no sex/race** — unavailable)
-  3. **+comorbidities** — HTN+dyslipidemia first, then others ≥5% prevalence or grouped
-  4. **+mood** — CES-D-10; PAID tested alongside
-  5. **+diet** (if present and non-leaking after source_value audit)
+- **Decision bar (pre-registered):** a feature block stays deployable iff ΔAUC **>+1.0**
+  (i.e. **>+0.01** absolute) with CIs that do not freely overlap 0 **and** stable permutation
+  importance. Implementation uses **fixed `recommended_split` + person-bootstrap CIs** (not
+  reshuffled nested k-fold). Below that, dropped regardless of SHAP.
+- **Block-ablation hierarchy** (package `training/path_a_blocks/`):
+  1. **watch-only** (GREEN) — **done** (test 4-AUC 0.666)
+  2. **+hard onboarding** — age, BMI/waist/height, family history, BP (**no sex/race**;
+     smoking absent in current onboarding parquet) — **done / decision_bar_pass** (0.699)
+  3. **+comorbidities** — HTN+dyslipidemia first, then others ≥5% — **next (1B)**
+  4. **+mood** — CES-D-10; PAID alongside
+  5. **+diet** (if present and non-leaking)
 
-  Report ΔAUC + ΔAUPRC per block with CIs.
+  Report ΔAUC + ΔAUPRC per block with bootstrap CIs.
 - **SHAP guardrail:** after the final fit, if top-10 SHAP are all survey items → "from wearables"
   claim dead; revisit watch engineering or framing. Report SHAP alongside permutation importance.
 - **Evaluation variants (all required):** 4-class macro-OVR AUC + AUPRC; binary healthy-vs-not;
@@ -305,7 +308,8 @@ Canonical training methodology lives in **`Training.md`**. Feature-facing rules 
   (not because of an unverified "RF beats XGB" citation — local prior says RF was weakest).
 - **Pools:** direct T2D = all labeled after wearable coverage filter; aux = post-sentinel +
   temporal-overlap CGM∩wearable subset (§1 table). **Do not silently restrict the T2D pool to
-  CGM-haves.** Track n at each filter stage. Train insulin n=105 is the binding constraint.
+  CGM-haves.** Track n at each filter stage. **Train insulin n=80** on wearable_core (post-clean)
+  is the binding constraint (was 105 before coverage filter).
 - **Imbalance strategy** (class weights / focal loss / TS aug for sequence models) locked
   **before** feature selection so importance isn't confounded by the loss.
 - **Weighting features:** don't hand-weight. GBMs learn natively (group-lasso/L1 optional to
@@ -315,13 +319,12 @@ Canonical training methodology lives in **`Training.md`**. Feature-facing rules 
 
 Aligned with `Training.md` §4–§7. Feature/engineering view:
 
-1. **Cleaning + GREEN feature matrix** (blocking — before any model). OMOP source_value map +
-   pivot; sentinels; UTC→local; dedup; coverage + overlap pools; leakage exclusion. Emit
-   `features_watch.parquet` (+ onboarding/comorbidity block matrices).
-2. **Path A direct = floor + headline baseline** (mandatory, first). LightGBM + CatBoost on GREEN;
-   nested CV on `recommended_split`; multiclass / binary / CORN; isotonic calibration + Brier.
-   Block-ablate survey add-ons. Record AUC/AUPRC/SHAP. This is the reference every aux result is
-   measured against — and the paper if aux fails.
+1. **Cleaning + GREEN feature matrix** — **done** (`data/processed/`; `watch_green` n=1824 +
+   onboarding/comorbidity/mood blocks). Re-clean only if policy changes.
+2. **Path A direct = floor + headline baseline** — **watch floor done**; **1A onboarding done**
+   (`training/path_a_watch/`, `training/path_a_blocks/REPORT.md`). Fixed split (not nested k-fold);
+   CORN neural still deferred; cal diagnostic. Continue block ladder (1B+). Watch-only 0.666 is
+   the aux reference; deployable 1A is 0.699.
 3. **Controlled B1 ablation** (cheap). Same backbone ± scalar-CGM glucose head — settles whether
    the teammate's multi-task failure was architecture or idea. Not the contribution.
 4. **B4 seq2seq full-CGM-trajectory teacher → T2D head** = **headline candidate**, paired with
@@ -351,9 +354,9 @@ deployment motivation (no CGM at inference) is real and publishable.
      comorbidity / mood / diet blocks as separate matrices for block ablation.
    - **(b)** 5-min (or chosen grid) CGM-window-aligned time-series with lookback (Path B aux +
      sequence T2D) — requires temporal overlap filter.
-3. **Path A baseline** — LightGBM + CatBoost, nested CV, all label formulations, calibration.
-   Record AUC/AUPRC/Brier/SHAP.
+3. **Path A baseline** — **done** (watch floor + 1A). Remaining: 1B+ blocks, optional CORN, cal rewrite.
 4. **Add survey EXTRAS one block at a time** off the §6 hierarchy; keep what clears the decision bar.
+   **1A passed;** next **1B comorbidity**.
 5. **Path B ladder:** controlled B1 → B4 (+ rep-distill) → B2 ablation; report downstream Δ vs
    Path A. Optionally SSL / end-to-end / MOMENT only behind the §7 gates.
 
@@ -396,7 +399,7 @@ summary:
 5. Diasense AUCs unpublished; used 5-fold CV not `recommended_split` — re-run or position as
    distinct architectural angle; don't claim direct numeric beat without matched protocol.
 6. Site×label confound: imputed time zone matters for all circadian features; report site×label.
-7. Class imbalance (train insulin n=105) — decide strategy before feature selection.
+7. Class imbalance (**train insulin n=80** on wearable_core) — weights locked (`balanced` / `Balanced`).
 8. **No sex/race features** — hard-onboarding block is smaller than typical wearable-T2D papers;
    gender/race fairness and confound checks are impossible on this release.
 9. Effective aux n (≤~1.9k post-mask/overlap) is smaller than raw CGM∩wearable counts — report the
@@ -407,9 +410,9 @@ summary:
 
 **Still open:**
 1. PAID instrument check (why do healthy have non-zero scores?) — one-line verification.
-2. Final coverage thresholds — lock after post-sentinel survival at candidate cuts (B5.1/B5.5).
-3. Min CGM↔wearable temporal overlap for aux (≥24h vs ≥72h) and surviving n.
-4. Year-long-wear ~63 pids: truncate (first 14d / best-coverage 14d) vs use-all (B4.3/B10.3).
+2. ~~Final coverage thresholds~~ → locked in `pipeline/config.yaml` / `CLEANING.md` (wearable_core=1824).
+3. Min CGM↔wearable temporal overlap for aux (≥24h vs ≥72h) — still open for Path B; clean default exists.
+4. ~~Year-long-wear truncation~~ → clean window policy in `CLEANING.md` (best_coverage 14d for long wear).
 5. Remaining `cmtrt_*` / `mhoccur_*` leakage audit beyond the confirmed hard-exclude list.
 6. `mssrffl`/`msslffl` foot monofilament: include or exclude?
 7. Lab biomarkers upper-bound arm: run or skip?

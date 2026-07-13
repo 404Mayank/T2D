@@ -10,7 +10,8 @@
 
 - **CPU:** AMD Ryzen 5 4600H. **GPU:** AMD Radeon RX 5600M, **6 GB VRAM** (mobile, not CUDA → useless for mainstream ML stacks). **RAM:** 16 GB. **Network:** ~40 Mbps.
 - **Filesystem:** btrfs root. User is fine putting up to ~5 GiB on the normal drive (no subvol needed); in practice the relevant pull is ~780 MiB so this is moot.
-- **Use for:** mini-variant prototyping, cleaning-logic dev, small parquet reshaping. **Not** for full-scale training.
+- **Use for:** cleaning/FE, Path A LightGBM/CatBoost (OpenCL LGBM on dGPU with `DRI_PRIME=1`;
+  CatBoost CPU). **Not** for CUDA neural Path B at full scale (use Lightning/Modal/Colab).
 
 ## Dataset location (canonical, on Google Drive)
 
@@ -89,4 +90,6 @@ Aligned with `Training.md` §7 build order (cleaning → Path A → B1 → B4 �
 - Drive mounts stall on random access → always copy canonical to local disk first.
 - Clinical tables are OMOP **long-format** (source_value rows) — FE is a pivot job, not column select (`DATA_STRUCTURE.md`, `DATA_AUDIT.md` A.2).
 - Garmin/dexcom timestamps are tz-aware UTC; clinical dates are **strings** (3 formats). Parse explicitly.
-- Effective aux n (≤~1.9k) and train insulin n=105 dominate compute *and* statistical power more than GPU choice.
+- Effective aux n (aux_eligible **1685** post-clean) and **train insulin n=80** (wearable_core)
+  dominate statistical power more than GPU choice. Path A tabular can use local AMD OpenCL
+  (LightGBM) + CPU CatBoost; Path B neural still wants CUDA.
