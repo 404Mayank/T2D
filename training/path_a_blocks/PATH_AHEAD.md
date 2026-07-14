@@ -89,6 +89,7 @@ From `onboarding.parquet` (available now):
 - 1B comorbidity → **bar fail** (core); complications sensitivity only  
 - 1C mood → **bar pass** (PAID)  
 - Phase A wrap → minimal/PAID/severity/binary done; **Path A frozen** (`REPORT_A_WRAP.md`)  
+- C1 sensitivities (smoking / obs / via) → **all bar-fail**; C1 unchanged (`PLAN_SENS_C1.md`)  
 - 1D diet / GREEN v2 / CORN: optional, not required to leave Path A  
 - **Next package work: Path B**
 

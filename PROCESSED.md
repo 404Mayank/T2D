@@ -154,13 +154,16 @@ Important columns:
 | `onboarding.parquet` | `person_id`, age, BMI, waist, BP, family hx, … — **no site/label** |
 | `comorbidity.parquet` | `mhoccur_*` keeps (not glc/pdr/rvo — hard-excluded) |
 | `mood.parquet` | CES-D items, PAID score, via1–3 — no `*startts` metadata |
+| `smoking.parquet` | **one-off** extract: `smoke_ever`, `smoke_current` from raw `susmk*` (not pipeline FE) |
 
 Join to `watch_green` on `person_id` for block ablation; still pull `label` /
 `recommended_split` only from `pool_masks`.
 
 **Modeling status:** Path A tabular ladder on these blocks is **frozen** (2026-07-14).
 Deployable secondary stack used mood + onboarding; comorbidity core failed the decision bar.
+Post-freeze C1 sensitivities (smoking / `mhoccur_obs` / via1–3 / joint) also **bar-fail**.
 See `training/path_a_blocks/REPORT_A_WRAP.md`. `diet` block (if produced by FE) was not run.
+Build smoking: `python -m training.path_a_blocks.build_smoking_features`.
 
 ### `clean/*.parquet` (sequence / Path B later)
 

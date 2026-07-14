@@ -192,12 +192,14 @@ sequence/aux models — not a substitute for locking class weights before featur
   regardless of SHAP.
 - **Block-ablation hierarchy** (fixed split + person-bootstrap CIs; package `path_a_blocks/`):
   watch-only → +hard onboarding (**age, BMI/waist/height, family history, BP** — no sex/race;
-  smoking not in current onboarding file) → +comorbidities (HTN+dyslipidemia first) → +mood
-  (CES-D-10; PAID) → +diet. Report ΔAUC + ΔAUPRC per block with CIs.
+  smoking was an FE gap: raw `susmk*`, now extractable via `build_smoking_features.py`) →
+  +comorbidities (HTN+dyslipidemia first) → +mood (CES-D-10; PAID) → +diet. Report ΔAUC +
+  ΔAUPRC per block with CIs.
   **Status (2026-07-14):** Path A tabular **frozen**. Watch floor 0.666; 1A onboarding bar-pass
   (0.699); 1B comorbidity bar-fail; 1C mood bar-pass (0.738 / binary 0.831, PAID-driven); wrap
-  ablations keep **C1** as secondary (minimal retention fail; binary HPO no gain). Diet not run.
-  See `training/path_a_blocks/REPORT_A_WRAP.md`.
+  ablations keep **C1** as secondary (minimal retention fail; binary HPO no gain). Post-freeze
+  C1 sensitivities (smoking / `mhoccur_obs` / `via1–3` / joint) **all bar-fail** — C1 unchanged.
+  Diet not run. See `training/path_a_blocks/REPORT_A_WRAP.md`.
 - Decide the class-imbalance strategy (weights / focal loss) **before** feature selection so
   importance isn't confounded by the loss.
 
@@ -213,9 +215,10 @@ sequence/aux models — not a substitute for locking class weights before featur
    - **Status (2026-07-14):** Path A tabular **frozen**. Watch-only floor **done**
      (`training/path_a_watch/`, CatBoost test 4-AUC **0.666**, binary **0.689**). Block ladder
      complete in `training/path_a_blocks/`: 1A **0.699** bar-pass; 1B core bar-fail; 1C mood
-     **0.738 / 0.831** bar-pass; wrap (minimal/PAID/severity/binary) → secondary pick **C1**.
-     Authority: `REPORT_A_WRAP.md` + `DECISIONS.md`. CORN neural ordinal still optional; cal
-     remains diagnostic. **Next: Path B** (B1 cheap → B4 headline candidate).
+     **0.738 / 0.831** bar-pass; wrap (minimal/PAID/severity/binary) → secondary pick **C1**;
+     C1 sensitivities smoke/obs/via **null**. Authority: `REPORT_A_WRAP.md` + `DECISIONS.md`.
+     CORN neural ordinal still optional; cal remains diagnostic. **Next: Path B** (B1 cheap →
+     B4 headline candidate).
 2. **Controlled B1 ablation** — same 64-hidden attention backbone, ± glucose head, summary-CGM
    target. Not the headline; settles whether the teammate's multi-task failure was architecture
    or idea.
