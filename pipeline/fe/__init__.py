@@ -1,1 +1,1 @@
-"""Feature engineering (View A summary features)."""
+"""Feature engineering (View A person summaries + Path B daily matrices)."""

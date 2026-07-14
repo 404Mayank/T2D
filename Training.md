@@ -113,17 +113,15 @@ a principled justification instead of ad-hoc "we regressed glucose then fed it,"
 non-KD formulations.
 
 **B1 — Multi-task joint (shared backbone + glucose head + T2D head).** *Ablation, not the
-headline.* The teammate already built and abandoned this (BiLSTM hidden=128, glucose regression
-on 8 daily CGM summaries, `L = L_class + λ·L_glucose`, λ ∈ {0,0.3,0.5,1.0}): glucose helped only
-+0.003 4-AUC, abandoned for KD. **Caveat that rescues it as an ablation:** their multi-task used a
-*different, larger backbone* than their proven model — a confound. Run a **controlled** version
-(identical 64-hidden attention backbone, ± glucose head) to settle whether the failure was their
-architecture or the idea. Cheap; belongs in the ablation table either way.
+headline — **frozen 2026-07-15**.* Controlled `attn_lstm_64` + day-level 8-vector glu head:
+post FE/scale fix, pure-seq test 4-AUC **0.652**; λ=0.5 multi-task **null** (paired boot CI lo≯0);
+GREEN late-fuse **no raise**. Pre-fix ~0.51 grid was broken sleep FE + unscaled inputs — not a
+ceiling. Teammate multi-task null directionally confirmed under controlled backbone. See
+`training/path_b/REPORT_B1.md`. Do **not** reopen B1 λ grids; ladder continues B2 → B4 → B3.
 
 Do **not** claim B1 > two-stage as established. Research confirms **no universal evidence that
-multi-task beats two-stage** — it's dataset/task-dependent and task-gradient conflict is a real
-failure mode (which is why GradNorm / uncertainty weighting exist as fixes, not guarantees). Use
-uncertainty weighting or GradNorm for task balance; run both B1 and B2 and let the ablation decide.
+multi-task beats two-stage** — dataset/task-dependent; task-gradient conflict is real. Run B2
+next and let the ablation decide against the frozen B1 floor.
 
 **B2 — Two-stage (glucose emulator → T2D predictor).** *Ablation.* Modular, debuggable, clean
 deployment story (swap stage 1 for watch inference). Risk: error compounding — stage-1 regression
@@ -217,11 +215,13 @@ sequence/aux models — not a substitute for locking class weights before featur
      complete in `training/path_a_blocks/`: 1A **0.699** bar-pass; 1B core bar-fail; 1C mood
      **0.738 / 0.831** bar-pass; wrap (minimal/PAID/severity/binary) → secondary pick **C1**;
      C1 sensitivities smoke/obs/via **null**. Authority: `REPORT_A_WRAP.md` + `DECISIONS.md`.
-     CORN neural ordinal still optional; cal remains diagnostic. **Next: Path B** (B1 cheap →
-     B4 headline candidate).
-2. **Controlled B1 ablation** — same 64-hidden attention backbone, ± glucose head, summary-CGM
-   target. Not the headline; settles whether the teammate's multi-task failure was architecture
-   or idea.
+     CORN neural ordinal still optional; cal remains diagnostic. **Path B / B1 frozen (2026-07-15):**
+     C1 sleep FE + C2 input z-score fixed; pure-seq test 4-AUC **0.652** (pre-fix 0.51 was broken inputs);
+     multi-task λ=0.5 **null** (Δ≈0, CI lo≯0); GREEN late-fuse **no raise** (0.638). Authority:
+     `training/path_b/REPORT_B1.md` + `DECISIONS.md`. **Next: B2 then B4 (B3 last).**
+2. **Controlled B1 ablation** — **done / frozen.** Same 64-hidden attention backbone, day-level glucose
+   head, summary-CGM target. Multi-task is a clean null after FE/scale repair; pure spine does not
+   beat Path A watch GBM (0.666). Not the headline.
 3. **B4 (seq2seq full-CGM-trajectory teacher → T2D head)** as the **headline candidate**, paired
    with **representation distillation** under a LUPI framing — the cleanest novelty delta and the
    one aux formulation untouched by the parallel attempt.

@@ -372,7 +372,7 @@ classify:
     - import_carbon_dioxide
 
 # ---------------------------------------------------------------------------
-# Feature engineering (View A — GREEN)
+# Feature engineering (View A GREEN + Path B daily)
 # ---------------------------------------------------------------------------
 features:
   watch_green:
@@ -388,6 +388,16 @@ features:
     rar_cosinor: true
     # Sleep duration target for U-shape (hours)
     sleep_target_hours: 7.5
+  # Path B / B1: person_id × day_local CGM targets (site-local day from UTC+zone)
+  cgm_daily:
+    enabled: true
+    min_readings_per_day: 72   # ~25% of 288 expected 5-min EGVs
+    require_pool: null         # default: has_cgm_valid; trainer filters aux_eligible
+  # Path B sequence input: daily wearable vector (site-correct hours/days)
+  watch_daily:
+    enabled: true
+    min_hr_minutes: 60
+    require_pool: wearable_core
   blocks:
     # Which clinical blocks to write as separate matrices
     write:
@@ -404,6 +414,8 @@ runtime:
   only_modalities: null
   # Limit to N participants (for smoke tests); null = all
   max_participants: null
+  # Parallel FE workers for watch_daily / heavy blocks (1 = serial)
+  fe_workers: 6
   # When max_participants is set, prefer pids that appear in heart_rate.parquet first
   prefer_hr_participants: true
   # Participant id allow-list (null = all)

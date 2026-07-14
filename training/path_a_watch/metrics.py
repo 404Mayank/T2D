@@ -29,9 +29,16 @@ def macro_ovr_auc(y_true: np.ndarray, proba: np.ndarray, labels: list[int] | Non
     y = _as_int(y_true)
     p = _as_proba(proba)
     labels = labels or list(range(p.shape[1]))
-    return float(
-        roc_auc_score(y, p, multi_class="ovr", average="macro", labels=labels)
-    )
+    # Average only over classes present in y (smoke subsets / rare folds).
+    scores = []
+    for k in labels:
+        y_bin = (y == k).astype(int)
+        if y_bin.min() == y_bin.max():
+            continue
+        scores.append(float(roc_auc_score(y_bin, p[:, k])))
+    if not scores:
+        return float("nan")
+    return float(np.mean(scores))
 
 
 def per_class_ovr_auc(y_true: np.ndarray, proba: np.ndarray) -> dict[int, float]:

@@ -34,6 +34,10 @@ data/processed/                    # gitignored; regenerate via pipeline
 │   ├── onboarding.parquet         # person_id + age/BMI/BP/FH… (no site/label)
 │   ├── comorbidity.parquet
 │   ├── mood.parquet
+│   ├── smoking.parquet            # one-off susmk* extract (Path A sens)
+│   ├── cgm_daily.parquet          # Path B: person_id × day_local CGM 8-vector
+│   ├── cgm_person.parquet         # Path B: person-level CGM aggregates (B2-ready)
+│   ├── watch_daily.parquet        # Path B: person_id × day_local wearable vector
 │   └── clinical_keep_all.parquet
 └── reports/
     ├── coverage_survival.csv
@@ -165,13 +169,58 @@ Post-freeze C1 sensitivities (smoking / `mhoccur_obs` / via1–3 / joint) also *
 See `training/path_a_blocks/REPORT_A_WRAP.md`. `diet` block (if produced by FE) was not run.
 Build smoking: `python -m training.path_a_blocks.build_smoking_features`.
 
-### `clean/*.parquet` (sequence / Path B later)
+### Path B daily features (B1 sequence + glucose targets)
 
-- Timestamps are **local** (`timestamp_local` or `start_time_local`) plus original UTC where kept.
+Built by `python -m pipeline.run_fe --blocks cgm_daily,watch_daily` (no re-clean).
+**Site-local civil day/hour is re-derived from UTC + `meta/shared_windows.zone`** — do not use
+parquet `*_local` wall clock for UAB (stored as LA for all pids).
+
+| File | Grain | n | Contents |
+|---|---|---:|---|
+| `features/cgm_daily.parquet` | person × day | 19805 rows / 1924 pids | 8 CGM stats + `cgm_n` + `cgm_day_valid` |
+| `features/cgm_person.parquet` | person | 1924 | daymeans of valid days + `n_valid_days` |
+| `features/watch_daily.parquet` | person × day | 22844 / 1824 core | daily HR/stress/RR/sleep/activity + `watch_day_valid` |
+
+**CGM 8-vector:** `cgm_mean`, `cgm_sd`, `cgm_cv`, `cgm_min`, `cgm_max`,
+`cgm_tir_70_180`, `cgm_tbr_70`, `cgm_tar_180` (note collinearity: cv=sd/mean; TIR+TBR+TAR=1).
+
+**Watch daily vector:** `hr_*`, `stress_*`, `rr_*`, `sleep_duration_hours`, `sleep_n_bouts`,
+`steps_sum`, `mvpa_min`, `light_min`, `sedentary_min`, masks.
+
+**Train-time join sketch (B1):**
+
+```python
+import pandas as pd
+
+wd = pd.read_parquet("data/processed/features/watch_daily.parquet")
+cgm = pd.read_parquet("data/processed/features/cgm_daily.parquet")
+meta = pd.read_parquet("data/processed/meta/pool_masks.parquet")
+
+days = wd.merge(cgm, on=["person_id", "day_local"], how="left")
+df = days.merge(
+    meta[["person_id", "label", "recommended_split", "wearable_core", "aux_eligible"]],
+    on="person_id",
+    how="inner",
+)
+# T2D head: wearable_core; glucose head: days with cgm_day_valid (aux)
+```
+
+Still: never put `label` / split / site inside feature files; never use CGM at inference.
+
+Acceptance snapshot (2026-07-14): aux median valid CGM days **11**; core median valid watch days
+**12**; aux median both-valid days **11**; UAB day keys match Chicago UTC convert.
+
+Detail / locks: `training/path_b/PLAN_B1_DATA.md`, `training/path_b/DECISIONS.md`.
+
+### `clean/*.parquet` (raw series for re-FE / B4 later)
+
+- UTC columns (`timestamp`, `start_time`, …) are authoritative for wall-clock re-derive.
+- `*_local` columns exist but are **parquet single-tz (LA)** — Path B FE re-converts via `zone`.
 - Already **deduped, sentinel-masked, HR-windowed** (shared window per pid).
 - One row-group per `person_id` (filter-friendly).
 - CGM is train-time supervision only — not a watch-only deployable feature.
 - Do not re-apply raw sentinels; do not re-window unless you change policy and re-run clean.
+- **5-min multi-modal aligned grid is not built yet** (B4 View B).
 
 ---
 

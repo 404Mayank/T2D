@@ -21,18 +21,20 @@
   2. **Path B headline candidate = B4** — seq2seq full-CGM-trajectory teacher → T2D head,
      with **representation distillation under LUPI** as the novelty delta vs Diasense
      logit-KD. Headline only if it beats direct; else rigorous-direct + negative-result framing.
-  3. **B1 multi-task (scalar CGM summaries)** = controlled ablation only (identical backbone
-     ± glucose head) — *not* the headline. Teammate already abandoned an uncontrolled version.
-  4. **B2 two-stage** = ablation (point-estimate handoff vs shared/seq2seq representation).
-  5. **B3 logit-KD** = strong baseline to beat / reproduce, not a contribution (Diasense method).
+  3. **B1 multi-task (scalar CGM summaries)** = controlled ablation only — **frozen 2026-07-15**.
+     After sleep FE unit fix + input z-score: pure-seq test 4-AUC **0.652**; λ=0.5 multi-task
+     **null** (paired boot CI lo≯0); GREEN late-fuse **no raise** (0.638). Pre-fix ~0.51 was
+     broken inputs. Authority: `training/path_b/REPORT_B1.md`. Do not reopen B1 λ grids.
+  4. **B2 two-stage** = **next** ablation (point-estimate handoff vs shared/seq2seq representation).
+  5. **B3 logit-KD** = strong baseline to beat / reproduce **last** (Diasense method), not a contribution.
   6. **SSL / end-to-end 1-min** = gated later lever (makes raw sequence models learnable at
      this n); not cold-start CNN. **MOMENT** = one-afternoon side bet.
 - **Scientific claim:** **watch-only is the paper headline.** Onboarding/self-report is the
   "deployable config" in a deployment section, not the claim.
 - **Direct is built first regardless** — floor, reference for every aux Δ, bare-minimum model.
-- **Exploration ladder:** deep Path A + cleaning → one aux spine (B1 cheap → B4 deep) →
-  SSL/MOMENT only if watch-only leaves dynamics on the table. Equal-depth "try everything"
-  without kill gates is out of scope.
+- **Execution ladder (Path B):** **B1 (frozen) → B2 → B4 → B3 last.** Headline design is still B4;
+  run order prefers cheap two-stage (B2) before trajectory FE (B4). SSL/MOMENT only if watch-only
+  leaves dynamics on the table. Equal-depth "try everything" without kill gates is out of scope.
 
 ## 1. Ground-truth data facts (verified on full cohort)
 
@@ -358,15 +360,20 @@ deployment motivation (no CGM at inference) is real and publishable.
    truncation + min CGM overlap + coverage thresholds). Full checklist: `DATA_AUDIT.md` §B.
 2. **Feature engineering → two views:**
    - **(a)** participant-level summary matrix (Path A direct T2D) — GREEN watch, then onboarding /
-     comorbidity / mood / diet blocks as separate matrices for block ablation.
-   - **(b)** 5-min (or chosen grid) CGM-window-aligned time-series with lookback (Path B aux +
-     sequence T2D) — requires temporal overlap filter.
+     comorbidity / mood / diet blocks as separate matrices for block ablation. **Done / frozen.**
+   - **(b-daily, B1)** person × day wearable vector + daily CGM 8-summary targets — **done**
+     (`features/watch_daily.parquet`, `features/cgm_daily.parquet`; site-local day from UTC+zone).
+     Sleep duration uses `.dt.total_seconds()`; `sleep_n_bouts` = sessions/onset day (fixed 2026-07-15).
+     See `training/path_b/PLAN_B1_DATA.md` / `PLAN_B1_FIX.md`.
+   - **(b-grid, B4 later)** 5-min multi-modal CGM-window-aligned grid — **not built**; needs tighter
+     concurrent overlap + alignment policy.
 3. **Path A baseline** — **frozen** (watch floor + 1A/1B/1C + wrap). Optional leftovers only:
    diet block, GREEN v2 FE, CORN, cal rewrite.
 4. **Survey EXTRAS** — hierarchy executed: 1A pass, 1B fail, 1C pass; diet skipped. Do not reopen
    1B as claim without a new pre-registered protocol.
-5. **Path B ladder (current main work):** controlled B1 → B4 (+ rep-distill) → B2 ablation; report
-   downstream Δ vs Path A watch floor (and vs deployable C1). Optionally SSL / end-to-end / MOMENT
+5. **Path B ladder (current main work):** **B1 frozen** → **B2 next** → **B4** (+ rep-distill headline)
+   → **B3 last**. Report downstream Δ vs Path A watch floor (and vs deployable C1). B1 pure-seq
+   floor ~0.652 (informational vs W0 0.666; not arch-matched). Optionally SSL / end-to-end / MOMENT
    only behind the §7 gates.
 
 ## 9. Compute & storage
@@ -434,7 +441,8 @@ summary:
 - ~~SpO₂ coverage on full~~ → 71.8% (1,638); stays Tier 3; does not gate primary pool.
 - ~~Sex/race availability~~ → not available; struck from onboarding.
 - ~~Stress scale~~ → 0–100; high thresholds ≥51 / ≥76.
-- ~~Headline architecture~~ → B4 + rep-distill under LUPI; B1 ablation only; Path A first.
+- ~~Headline architecture~~ → B4 + rep-distill under LUPI; B1 ablation **frozen** (null multi-task;
+  pure-seq 0.652); Path A first; run order **B1 → B2 → B4 → B3**.
 - ~~condition_occurrence ICD leakage~~ → no ICDs; self-report dup of observation.
 - ~~`via*` blanket drop~~ → per-field: keep via1–3, drop clinical/retinal via*.
 

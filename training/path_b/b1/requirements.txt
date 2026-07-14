@@ -1,0 +1,9 @@
+# B1 neural path. Prefer ROCm wheel if available on this machine; else CPU.
+# CPU (Python 3.14):
+#   .venv/bin/python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+# ROCm (if index has a matching wheel):
+#   .venv/bin/python -m pip install torch --index-url https://download.pytorch.org/whl/rocm6.2
+
+torch>=2.2
+PyYAML>=6.0
+# sklearn/pandas already required by path_a_watch

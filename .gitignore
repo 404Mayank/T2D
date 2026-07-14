@@ -27,3 +27,8 @@ training/path_a_blocks/artifacts/
 # Misc
 *.log
 .DS_Store
+
+# Path B run artifacts
+training/path_b/**/artifacts/
+
+gpucore.*

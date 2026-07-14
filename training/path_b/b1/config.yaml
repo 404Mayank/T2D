@@ -1,0 +1,97 @@
+# B1 controlled multi-task — knobs only (locks in PLAN_B1_TRAIN / PLAN_B1_IMPL)
+
+paths:
+  watch_daily: data/processed/features/watch_daily.parquet
+  cgm_daily: data/processed/features/cgm_daily.parquet
+  watch_green: data/processed/features/watch_green.parquet
+  pool_masks: data/processed/meta/pool_masks.parquet
+  artifacts: training/path_b/b1/artifacts
+
+# Person-level GREEN late-fusion into class head (watch-only; no survey).
+# Off by default — pure sequence B1. Enable for G4b confirmation runs.
+green_fusion:
+  enabled: false
+  # null → all numeric watch_green cols except person_id
+  cols: null
+
+feature_cols:  # fixed order; no coverage counts (hr_n / stress_n / rr_n)
+  - hr_mean
+  - hr_sd
+  - hr_min
+  - hr_max
+  - hr_nocturnal_mean
+  - hr_day_mean
+  - stress_mean
+  - stress_sd
+  - stress_pct_medium_plus
+  - stress_pct_high
+  - rr_mean
+  - rr_sd
+  - sleep_duration_hours
+  - sleep_n_bouts
+  - steps_sum
+  - mvpa_min
+  - light_min
+  - sedentary_min
+
+# Per-feature NaN fill before median impute (applied first).
+# sleep_duration_hours intentionally NOT here: missing = no session → train median
+# on observed sleep days (C1/C4). sleep_n_bouts: 0 sessions is meaningful.
+fill_zero:
+  - sleep_n_bouts
+  - steps_sum
+  - mvpa_min
+  - light_min
+  - sedentary_min
+
+glu_cols:
+  - cgm_mean
+  - cgm_sd
+  - cgm_cv
+  - cgm_min
+  - cgm_max
+  - cgm_tir_70_180
+  - cgm_tbr_70
+  - cgm_tar_180
+
+data:
+  max_len: 16
+  t_min_valid_watch: 7
+  expected_core_n: 1824
+  glu_std_floor: 1.0e-6
+  feat_std_floor: 1.0e-6  # train-only feature z-score (C2)
+
+model:
+  hidden: 64
+  dropout: 0.2
+  bidirectional: true
+  n_classes: 4
+
+train:
+  seed: 42
+  batch_size: 32
+  max_epochs: 80
+  lr: 1.0e-3
+  weight_decay: 1.0e-4
+  grad_clip: 1.0
+  es_patience: 15
+  plateau_patience: 5
+  plateau_factor: 0.5
+  num_workers: 0
+
+lambdas: [0.0, 0.3, 0.5, 1.0]
+
+eval:
+  bootstrap_n: 2000
+  bootstrap_seed: 42
+  calibrate: isotonic  # val-fit diagnostic; claim ranking = raw
+
+path_a_floor:
+  macro_ovr_auc: 0.6662
+  binary_auc: 0.6889
+
+quick:
+  max_epochs: 3
+  es_patience: 2
+  max_participants: 64
+  lambdas: [0.0, 0.5]

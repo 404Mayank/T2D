@@ -30,6 +30,9 @@ file without re-deriving the design from code.
 
 # 3) GREEN wearable features (person_id + features ONLY)
 .venv/bin/python -m pipeline.run_fe --blocks watch
+
+# 4) Path B daily matrices (B1; no re-clean; site-tz re-derived in FE)
+.venv/bin/python -m pipeline.run_fe --blocks cgm_daily,watch_daily
 ```
 
 **Train-time join** (feature files do **not** contain label/split/site):
