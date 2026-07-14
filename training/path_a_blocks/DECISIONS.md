@@ -134,3 +134,16 @@ Report: **`REPORT_A_WRAP.md`**. Pick: `artifacts/wrap_paper_pick.json`.
 - **Binary tables:** multiclass-derived `1−P0` (no E4 ≥ +0.01)
 - **PAID** ≈ full mood block; **CES** negative control confirmed
 - **Path A tabular frozen** → next **Path B** only (no diet / no reopening 1B as claim without new protocol)
+
+## C1 sensitivities (2026-07-14) — smoke / obs / via
+
+Plan: `PLAN_SENS_C1.md`. Parent always original C1. Independent then joint.
+
+| Exp | 4-AUC | Binary | ΔAUC vs C1 | boot Δ lo | c1 | c2 | c3 | bar | expand C1 |
+|---|---:|---:|---:|---:|---|---|---|---|---|
+| smoke (`susmk*` ever+current) | 0.7351 | 0.8286 | −0.0027 | −0.016 | F | F | T | **F** | no |
+| obs (`mhoccur_obs`) | 0.7393 | 0.8276 | +0.0015 | −0.009 | F | F | T | **F** | no |
+| via (`via1–3`) | 0.7409 | 0.8240 | +0.0031 | −0.010 | F | F | T | **F** | no |
+| all3 joint | 0.7472 | 0.8285 | +0.0094 | −0.005 | F | F | T | **F** | no (joint-only) |
+
+**Decision:** keep secondary = **C1 unchanged**. Smoking FE gap fixed (`smoking.parquet`) but no bar pass. Obesity flag BMI-redundant as expected. Vision mild/null. Joint closest (+0.009) still under +0.01 and CI overlaps 0.
