@@ -215,6 +215,17 @@ Full write-up: **`REPORT_A_WRAP.md`**. Pick: `artifacts/wrap_paper_pick.json`.
 
 Key wrap facts: **paid_only ≈ C1**; **ces_only** fails; **watch+PAID** without onboarding 0.718; binary HPO underperforms derived scores.
 
+### C1 sensitivities (smoke / obs / via) — 2026-07-14
+
+Independent then joint on top of C1 (`PLAN_SENS_C1.md`). **None bar-pass; C1 not expanded.**
+
+| Add-on | 4-AUC | Δ vs C1 | bar |
+|---|---:|---:|---|
+| smoking (ever+current) | 0.735 | −0.003 | fail |
+| mhoccur_obs | 0.739 | +0.002 | fail |
+| via1–3 | 0.741 | +0.003 | fail |
+| all three | 0.747 | +0.009 | fail (joint only) |
+
 ---
 
 ## 8. How to reproduce
