@@ -42,8 +42,11 @@ summary features) is built first and is the floor every aux result is measured a
 **Path A status (2026-07-14, frozen):** Watch-only CatBoost floor test 4-AUC **0.666** / binary
 **0.689** (`training/path_a_watch/`). Deployable secondary = **watch+onboarding+mood (C1)** 4-AUC
 **0.738** / binary **0.831** (1A 0.699 bar-pass; 1B comorbidity bar-fail; 1C mood bar-pass; wrap
-minimal retention fail → keep full C1). Freeze write-up: `training/path_a_blocks/REPORT_A_WRAP.md`.
-**Next: Path B** (privileged CGM / distillation). Optional leftovers: diet block, GREEN v2 FE, CORN.
+minimal retention fail → keep full C1). Post-freeze sensitivities on C1 (smoking `susmk*`,
+`mhoccur_obs`, `via1–3`, joint) all **bar-fail** — stack unchanged. Smoking was an FE gap (raw codes
+`susmk*` not `smok*`); extractor added, no modeling lift. Freeze write-up:
+`training/path_a_blocks/REPORT_A_WRAP.md`. **Next: Path B** (privileged CGM / distillation).
+Optional leftovers: diet block, GREEN v2 FE, CORN.
 
 ## Diasense — teammate baseline to beat / stay distinct from
 

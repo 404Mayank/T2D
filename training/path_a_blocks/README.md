@@ -3,16 +3,17 @@
 Deployable / block-ablation track. Watch-only scientific floor: `../path_a_watch/`.
 
 **Status (2026-07-14):** Path A tabular **frozen**. Secondary pick = **C1 mood** (0.738 / 0.831).  
+C1 sensitivities (smoking / obesity flag / via): **all bar-fail**.  
 Authority: `REPORT_A_WRAP.md`, `DECISIONS.md`. Next project work: **Path B**.
 
 | Doc | Role |
 |---|---|
-| `REPORT_A_WRAP.md` | Freeze + wrap analytics |
+| `REPORT_A_WRAP.md` | Freeze + wrap + C1 sensitivity analytics |
 | `REPORT.md` | Ladder progress |
 | `PATH_AHEAD.md` | Roadmap / gates |
 | `DECISIONS.md` | Locks + chronology |
 | `config.yaml` | Paths, keep lists, HPO, parent refs |
-| `PLAN_*.md` | Historical plans (1B / 1C / wrap) |
+| `PLAN_*.md` | Plans (1B / 1C / wrap / C1 sens) |
 
 ## Run
 
@@ -28,6 +29,10 @@ export DRI_PRIME=1
 
 .venv/bin/python -m training.path_a_blocks.build_minimal_ranks
 .venv/bin/python -m training.path_a_blocks.run_wrap --all
+
+# optional C1 sensitivities (smoke/obs/via)
+.venv/bin/python -m training.path_a_blocks.build_smoking_features
+.venv/bin/python -m training.path_a_blocks.run_sens --all
 ```
 
 Artifacts under `artifacts/<run_id>/` (gitignored).

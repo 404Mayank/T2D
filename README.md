@@ -14,9 +14,10 @@ Paper headline claim = **watch-only**. Clinical self-report = secondary / deploy
 | 1B comorbidity core | 0.709 | 0.778 | bar fail — not in stack |
 
 Wrap ablations: PAID carries mood; CES null; minimal 12/18 fail retention vs C1; dedicated binary HPO does not beat multiclass-derived `1−P0`.  
+Post-freeze C1 sensitivities (smoking, obesity flag, via1–3, joint): **all bar-fail** — C1 unchanged.  
 Details: `training/path_a_blocks/REPORT_A_WRAP.md`.
 
-**Done:** cleaning/FE → watch floor → diagnostics → 1A/1B/1C → wrap freeze.  
+**Done:** cleaning/FE → watch floor → diagnostics → 1A/1B/1C → wrap freeze → C1 sensitivities.  
 **Left:** Path B (privileged CGM / distillation). Optional: diet block, GREEN v2 FE, ordinal.
 
 ## Layout

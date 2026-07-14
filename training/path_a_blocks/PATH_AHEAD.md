@@ -132,4 +132,5 @@ Decisions log: `DECISIONS.md` in this directory.
 | 2026-07-14 | **1C_scores decision_bar_pass=True** (0.738 / binary 0.831, Δ+0.039) — PAID-driven |
 | 2026-07-14 | Phase A wrap plan revised post-critique: `PLAN_A_WRAP.md` |
 | 2026-07-14 | **Wrap complete** (`run_wrap --all`); minimal retention fail → secondary = **C1**; Path A frozen |
+| 2026-07-14 | C1 sensitivities smoke/obs/via/all3 — **all bar-fail**; C1 unchanged (`PLAN_SENS_C1.md`) |
 | next | **Path B** (privileged CGM / distillation). See `REPORT_A_WRAP.md` |

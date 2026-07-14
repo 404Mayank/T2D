@@ -159,19 +159,40 @@ Smoke dirs (`wrap_smoke_*`) are non-claim.
 
 ---
 
-## 8. Code entry points
+## 8. Post-freeze C1 sensitivities (smoke / obs / via)
+
+Optional add-ons on **original C1** (`PLAN_SENS_C1.md`). Independent then joint. Expand C1 only if an independent run bar-passes.
+
+| Exp | Add-on | 4-AUC | Binary | ΔAUC vs C1 | boot Δ lo | bar | expand C1 |
+|---|---|---:|---:|---:|---:|---|---|
+| S1 | `smoke_ever` + `smoke_current` (`susmk*`) | 0.735 | 0.829 | −0.003 | −0.016 | **fail** | no |
+| S2 | `mhoccur_obs` | 0.739 | 0.828 | +0.002 | −0.009 | **fail** | no |
+| S3 | `via1–3` | 0.741 | 0.824 | +0.003 | −0.010 | **fail** | no |
+| S4 | all three | 0.747 | 0.829 | +0.009 | −0.005 | **fail** | no (joint-only) |
+
+**Decision:** secondary remains **full C1**. Smoking FE gap fixed (`build_smoking_features.py` → `smoking.parquet`) but no bar lift. Obesity flag BMI-redundant. Vision mild/null and severity-adjacent. Joint closest (+0.009) still under +0.01 with CI overlapping 0.
+
+Artifacts: `sens_{smoke,obs,via,all3}_20260714_*`.
+
+---
+
+## 9. Code entry points
 
 ```bash
 export DRI_PRIME=1
 .venv/bin/python -m training.path_a_blocks.build_minimal_ranks
 .venv/bin/python -m training.path_a_blocks.run_wrap --exp paid_only
 .venv/bin/python -m training.path_a_blocks.run_wrap --all
+
+# optional post-freeze sensitivities
+.venv/bin/python -m training.path_a_blocks.build_smoking_features
+.venv/bin/python -m training.path_a_blocks.run_sens --all
 ```
 
-Plan: `PLAN_A_WRAP.md`, `PLAN_A_WRAP_IMPL.md`. Decisions: `DECISIONS.md`.
+Plan: `PLAN_A_WRAP.md`, `PLAN_A_WRAP_IMPL.md`, `PLAN_SENS_C1.md`. Decisions: `DECISIONS.md`.
 
 ---
 
-## 9. Handoff → Path B
+## 10. Handoff → Path B
 
-Path A tabular is done. Next work is **Path B** (privileged CGM / teacher–student / distillation), not more survey blocks or diet in this package. Do not move the W0 headline or re-open 1B as bar-pass without a new pre-registered protocol.
+Path A tabular is done (wrap + C1 sensitivities null). Next work is **Path B** (privileged CGM / teacher–student / distillation), not more survey blocks or diet in this package. Do not move the W0 headline or re-open 1B / smoke / obs / via as claim without a new pre-registered protocol.
