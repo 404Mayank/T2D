@@ -147,7 +147,7 @@ Important columns:
 | train / val / test (core) | 1277 / 270 / 277 |
 | **train insulin** | **80** |
 
-### Clinical feature blocks (optional Path A ablations)
+### Clinical feature blocks (Path A ablations)
 
 | File | Contents |
 |---|---|
@@ -157,6 +157,10 @@ Important columns:
 
 Join to `watch_green` on `person_id` for block ablation; still pull `label` /
 `recommended_split` only from `pool_masks`.
+
+**Modeling status:** Path A tabular ladder on these blocks is **frozen** (2026-07-14).
+Deployable secondary stack used mood + onboarding; comorbidity core failed the decision bar.
+See `training/path_a_blocks/REPORT_A_WRAP.md`. `diet` block (if produced by FE) was not run.
 
 ### `clean/*.parquet` (sequence / Path B later)
 

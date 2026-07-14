@@ -95,10 +95,11 @@ Both critics: **revise**. Incorporated:
 
 ## 6. Open / deferred
 
-- Full CORN neural ordinal (Training.md evaluation variant) — follow-up package
-- Survey block ablation hierarchy under person-bootstrap CIs
-- Path B
-- Person-bootstrap CIs on test for floor CIs (optional polish after first numbers)
+- Full CORN neural ordinal (Training.md evaluation variant) — optional leftover
+- Survey block ablation hierarchy — **done in `path_a_blocks/`** (1A/1B/1C + wrap freeze 2026-07-14);
+  see `../path_a_blocks/REPORT_A_WRAP.md`. This package remains watch-only floor only.
+- **Path B** — main next work (privileged CGM)
+- Person-bootstrap CIs on floor test — optional polish (diagnostics already ran some of this)
 
 ## 7. How to run
 

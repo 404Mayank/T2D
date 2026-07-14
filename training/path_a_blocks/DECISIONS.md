@@ -53,7 +53,7 @@ Floor CatBoost recomputed test 4-AUC **0.6662** (bit-match reference).
 
 **SHAP guardrail:** 5/10 top features onboarding (WHR, FH parent/sibling, waist, BMI); 5/10 watch (hr_cv, rhr, nocturnal dip, hr_sd, sri). **Not** all-survey — mixed deployable signal.
 
-**Interpretation:** Onboarding clears the pre-registered bar and moves binary toward the honest band (0.78–0.82 still short). 4-class still below 0.72–0.75. Next per PATH_AHEAD: **1B comorbidity (HTN-first)** or stop and document deployable config.
+**Interpretation:** Onboarding clears the pre-registered bar and moves binary toward the honest band (0.78–0.82 still short). 4-class still below 0.72–0.75. *(Historical next at the time: 1B comorbidity. Superseded by 1B/1C/wrap — Path A now frozen; see wrap section below.)*
 
 ## 1B results (locked plan post-critique)
 

@@ -39,9 +39,11 @@ Diasense logit-KD. Primary novelty candidate is **B4 — seq2seq full-CGM-trajec
 head**, with **representation distillation under LUPI**. Path A (direct LightGBM+CatBoost on
 summary features) is built first and is the floor every aux result is measured against.
 
-**Path A status (2026-07-13):** Watch-only CatBoost floor test 4-AUC **0.666** / binary **0.689**
-(`training/path_a_watch/`). Deployable **watch+onboarding** 4-AUC **0.699** / binary **0.749**
-with decision_bar_pass (`training/path_a_blocks/REPORT.md`). Next block: comorbidity (1B).
+**Path A status (2026-07-14, frozen):** Watch-only CatBoost floor test 4-AUC **0.666** / binary
+**0.689** (`training/path_a_watch/`). Deployable secondary = **watch+onboarding+mood (C1)** 4-AUC
+**0.738** / binary **0.831** (1A 0.699 bar-pass; 1B comorbidity bar-fail; 1C mood bar-pass; wrap
+minimal retention fail → keep full C1). Freeze write-up: `training/path_a_blocks/REPORT_A_WRAP.md`.
+**Next: Path B** (privileged CGM / distillation). Optional leftovers: diet block, GREEN v2 FE, CORN.
 
 ## Diasense — teammate baseline to beat / stay distinct from
 

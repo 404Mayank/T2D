@@ -44,4 +44,5 @@ Run `full_20260713_221240` (local `artifacts/`, gitignored):
 | Binary AUC | **0.689** |
 | Family | CatBoost Ordered |
 
-Block ladder / onboarding: see `../path_a_blocks/REPORT.md`.
+Block ladder + freeze: `../path_a_blocks/REPORT_A_WRAP.md` (Path A tabular frozen 2026-07-14).
+Ladder detail: `../path_a_blocks/REPORT.md`.

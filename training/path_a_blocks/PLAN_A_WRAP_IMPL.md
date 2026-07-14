@@ -1,9 +1,8 @@
 # Implementation plan — Phase A wrap (`run_wrap`)
 
-> Status: **revised post code-plan critique (glm-5.2)**. Follows locked `PLAN_A_WRAP.md`.  
-> Goal: freeze Path A tabular with all 11 pre-registered experiments.
->
-> Critique verdict: **REVISE** → O1/O2 blockers + O3–O8 incorporated below.
+> Status: **executed 2026-07-14** (all 11 experiments + `REPORT_A_WRAP.md` + Path A freeze).  
+> Historical plan (post code-plan critique). Source of truth for results: `REPORT_A_WRAP.md`.  
+> Follows locked `PLAN_A_WRAP.md`. Critique verdict at plan time: **REVISE** → O1/O2 + O3–O8 incorporated before coding.
 
 ---
 

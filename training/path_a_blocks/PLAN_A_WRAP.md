@@ -2,7 +2,7 @@
 
 > Last Path A tabular batch before Path B. Research paper focus.  
 > Plan critique (glm-5.2): **revise** → incorporated below.  
-> **Await user go before implement/run.**
+> **Executed 2026-07-14** — results in `REPORT_A_WRAP.md` (Path A frozen).
 
 ---
 

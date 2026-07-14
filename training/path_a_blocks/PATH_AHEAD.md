@@ -2,7 +2,8 @@
 
 > Roadmap for **raising the Path A floor** after the watch-only GBM baseline.  
 > Package: `training/path_a_blocks/`. Watch-only floor lives in `training/path_a_watch/`.  
-> Authority: `Training.md` §6–7, `FEATURES.md` §0/§6, `PROCESSED.md`.
+> Authority: `Training.md` §6–7, `FEATURES.md` §0/§6, `PROCESSED.md`.  
+> **Status (2026-07-14): Path A tabular frozen** — see `REPORT_A_WRAP.md`. Next package work is **Path B**.
 
 ## 0. Why a new package
 

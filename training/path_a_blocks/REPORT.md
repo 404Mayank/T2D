@@ -1,12 +1,14 @@
-# Path A progress report — diagnostics + 1A onboarding
+# Path A progress report — ladder + freeze
 
-**Date:** 2026-07-13  
+**Date:** 2026-07-14 (freeze); earlier sections 2026-07-13  
 **Packages:** `training/path_a_watch/` (watch-only floor), `training/path_a_blocks/` (deployable blocks)  
-**Roadmap:** `PATH_AHEAD.md` · **Decisions log:** `DECISIONS.md`  
+**Roadmap:** `PATH_AHEAD.md` · **Decisions log:** `DECISIONS.md` · **Freeze report:** `REPORT_A_WRAP.md`  
 **Local run artifacts (gitignored):**  
 - Floor: `path_a_watch/artifacts/full_20260713_221240/`  
 - Diagnostics: `path_a_blocks/artifacts/diag_20260713_224549/`  
-- 1A: `path_a_blocks/artifacts/onboarding_20260713_224744/`
+- 1A: `path_a_blocks/artifacts/onboarding_20260713_224744/`  
+- 1C: `path_a_blocks/artifacts/mood_scores_20260714_014415/`  
+- Wrap: `path_a_blocks/artifacts/wrap_*` + `wrap_paper_pick.json`
 
 ---
 
@@ -14,14 +16,16 @@
 
 | Track | Model | Test 4-AUC | Test binary AUC | Status |
 |---|---|---:|---:|---|
-| **Watch-only floor** (paper claim baseline) | CatBoost Ordered, 30 GREEN | **0.666** | **0.689** | Locked |
-| **1A deployable** | CatBoost + 15 onboarding | **0.699** | **0.749** | **decision_bar_pass=True** |
+| **Watch-only floor** (paper claim baseline) | CatBoost Ordered, 30 GREEN | **0.666** | **0.689** | Locked / headline |
+| **1A** watch+onboarding | CatBoost + 15 onboarding | **0.699** | **0.749** | decision_bar_pass |
+| **1B** comorbidity core | + risk-factor checklist | 0.709 | 0.778 | **bar fail** (out of stack) |
+| **C1 deployable secondary** | + mood scores (PAID) | **0.738** | **0.831** | bar pass; **frozen pick** |
 
-- Onboarding clears the pre-registered decision bar (Δ 4-AUC **+0.033**, paired bootstrap lo **> 0**, onboarding perm stable).  
-- Binary moves toward the honest band (~0.78–0.82) but is still short (~0.75).  
-- 4-class remains below the honest band (~0.72–0.75).  
-- SHAP is **mixed** (5/10 watch, 5/10 onboarding) — survey-dominance guardrail **not** tripped.  
-- Healthy vs pre-diabetes remains nearly chance (pairwise 0.52); model still separates **extremes** better than mid severity.
+- **Path A tabular frozen (2026-07-14).** Full wrap analytics: `REPORT_A_WRAP.md`.  
+- Headline watch-only unchanged at **0.666**. Secondary tabular = **full C1** (minimal sets failed retention).  
+- Binary in tables = multiclass-derived `1−P0` (dedicated binary HPO never +0.01).  
+- **Next = Path B.** Optional leftovers only: diet, GREEN v2, CORN.  
+- Class-2 remains weak; ends of spectrum still easier than mid severity.
 
 ---
 

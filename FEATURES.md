@@ -15,8 +15,9 @@
 - **Architecture bet (aligned with `Training.md`):**
   1. **Path A direct baseline first** (mandatory floor) — LightGBM + CatBoost on GREEN
      summary features; fixed `recommended_split` (+ person-bootstrap CIs for block Δ);
-     multiclass/binary (+ ordinal metrics); calibration diagnostic. **Status:** watch floor +
-     1A onboarding done — `training/path_a_blocks/REPORT.md`.
+     multiclass/binary (+ ordinal metrics); calibration diagnostic. **Status (2026-07-14):** Path A
+     tabular **frozen** — watch floor 0.666; deployable C1 (watch+onboarding+mood) 0.738 / 0.831.
+     See `training/path_a_blocks/REPORT_A_WRAP.md`.
   2. **Path B headline candidate = B4** — seq2seq full-CGM-trajectory teacher → T2D head,
      with **representation distillation under LUPI** as the novelty delta vs Diasense
      logit-KD. Headline only if it beats direct; else rigorous-direct + negative-result framing.
@@ -293,11 +294,13 @@ Canonical training methodology lives in **`Training.md`**. Feature-facing rules 
   1. **watch-only** (GREEN) — **done** (test 4-AUC 0.666)
   2. **+hard onboarding** — age, BMI/waist/height, family history, BP (**no sex/race**;
      smoking absent in current onboarding parquet) — **done / decision_bar_pass** (0.699)
-  3. **+comorbidities** — HTN+dyslipidemia first, then others ≥5% — **next (1B)**
-  4. **+mood** — CES-D-10; PAID alongside
-  5. **+diet** (if present and non-leaking)
+  3. **+comorbidities** — HTN-first core — **done / decision_bar_pass=False** (0.709); not in stack
+  4. **+mood** — CES-D-10 + PAID scores — **done / decision_bar_pass** (0.738 / binary 0.831);
+     PAID carries the block; CES near-null alone
+  5. **+diet** (if present and non-leaking) — **not run**; optional only, not required for freeze
 
-  Report ΔAUC + ΔAUPRC per block with bootstrap CIs.
+  Report ΔAUC + ΔAUPRC per block with bootstrap CIs. **Path A tabular frozen** → secondary
+  deployable = watch+onboarding+mood (C1). Wrap: `REPORT_A_WRAP.md`.
 - **SHAP guardrail:** after the final fit, if top-10 SHAP are all survey items → "from wearables"
   claim dead; revisit watch engineering or framing. Report SHAP alongside permutation importance.
 - **Evaluation variants (all required):** 4-class macro-OVR AUC + AUPRC; binary healthy-vs-not;
@@ -322,10 +325,10 @@ Aligned with `Training.md` §4–§7. Feature/engineering view:
 
 1. **Cleaning + GREEN feature matrix** — **done** (`data/processed/`; `watch_green` n=1824 +
    onboarding/comorbidity/mood blocks). Re-clean only if policy changes.
-2. **Path A direct = floor + headline baseline** — **watch floor done**; **1A onboarding done**
-   (`training/path_a_watch/`, `training/path_a_blocks/REPORT.md`). Fixed split (not nested k-fold);
-   CORN neural still deferred; cal diagnostic. Continue block ladder (1B+). Watch-only 0.666 is
-   the aux reference; deployable 1A is 0.699.
+2. **Path A direct = floor + headline baseline** — **frozen (2026-07-14)**. Watch-only 0.666 is
+   the aux / paper reference; deployable secondary is **C1 0.738 / 0.831** (not 1A alone).
+   Ladder + wrap: `training/path_a_blocks/REPORT.md`, `REPORT_A_WRAP.md`. CORN optional; cal
+   diagnostic. **Next engineering: Path B**, not more survey blocks.
 3. **Controlled B1 ablation** (cheap). Same backbone ± scalar-CGM glucose head — settles whether
    the teammate's multi-task failure was architecture or idea. Not the contribution.
 4. **B4 seq2seq full-CGM-trajectory teacher → T2D head** = **headline candidate**, paired with
@@ -355,11 +358,13 @@ deployment motivation (no CGM at inference) is real and publishable.
      comorbidity / mood / diet blocks as separate matrices for block ablation.
    - **(b)** 5-min (or chosen grid) CGM-window-aligned time-series with lookback (Path B aux +
      sequence T2D) — requires temporal overlap filter.
-3. **Path A baseline** — **done** (watch floor + 1A). Remaining: 1B+ blocks, optional CORN, cal rewrite.
-4. **Add survey EXTRAS one block at a time** off the §6 hierarchy; keep what clears the decision bar.
-   **1A passed;** next **1B comorbidity**.
-5. **Path B ladder:** controlled B1 → B4 (+ rep-distill) → B2 ablation; report downstream Δ vs
-   Path A. Optionally SSL / end-to-end / MOMENT only behind the §7 gates.
+3. **Path A baseline** — **frozen** (watch floor + 1A/1B/1C + wrap). Optional leftovers only:
+   diet block, GREEN v2 FE, CORN, cal rewrite.
+4. **Survey EXTRAS** — hierarchy executed: 1A pass, 1B fail, 1C pass; diet skipped. Do not reopen
+   1B as claim without a new pre-registered protocol.
+5. **Path B ladder (current main work):** controlled B1 → B4 (+ rep-distill) → B2 ablation; report
+   downstream Δ vs Path A watch floor (and vs deployable C1). Optionally SSL / end-to-end / MOMENT
+   only behind the §7 gates.
 
 ## 9. Compute & storage
 
