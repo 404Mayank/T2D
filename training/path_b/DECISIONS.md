@@ -225,3 +225,281 @@ B2 two-stage ablation and/or B4 trajectory plan; optional B1 h=128 / richer dail
 Daily BiLSTM + optional person GREEN is a different inductive bias from CatBoost-on-GREEN. Missing columns were not the binding constraint after C1+C2; architecture/task (trajectory / two-stage / distill) is. Pre-fix grid remains broken-input history only.
 
 **Report:** `REPORT_B1.md` rewritten as final freeze report.
+
+---
+
+## 2026-07-15 — B2 data readiness + plan (pre-implement)
+
+**Plan:** `PLAN_B2.md` (critiquer → revise; disposition applied). **Not implemented yet.**
+
+### Data readiness
+| Topic | Decision |
+|---|---|
+| Re-clean for B2? | **No** |
+| New FE for B2 v1? | **No** — `cgm_person` + GREEN + C1 blocks sufficient |
+| B4 5-min grid | Still missing; **not** a B2 blocker |
+| Stage-1 R² probe (HistGB) | ~0.07 on `cgm_mean` — modeling risk, not missing data |
+| Oracle headroom probe | C1+true CGM ~0.79 vs C1~0.71 (rough) — privilege real if Stage-1 were perfect |
+
+### B2 design locks (summary; full in PLAN_B2)
+| Topic | Lock |
+|---|---|
+| Role | Two-stage point-estimate handoff ablation; not headline |
+| User ambition bar | Beat frozen C1 (0.7378 / 0.8309); **primary fair compare = T1 vs D1** if D1 drifts |
+| Stage-1 X / Y | W0 GREEN → 8 `cgm_*_daymean`; fit train∩aux only |
+| Stage-1 model | **8× LightGBM** primary; CatBoost multi = sensitivity |
+| Stage-2 | Path A family (CatBoost+LGBM); HPO spaces + `balanced`/`Balanced` from `path_a_blocks` |
+| Train Ŷ leakage | K=5 OOF on aux-train; **non-aux train Ŷ = mean of K fold models** |
+| Arms | D0/D1/T0/T1 (full core); **D1a + O1** (aux-matched oracle); O0/D0a optional |
+| Median-fill true CGM | **Forbidden** as primary oracle |
+| Metrics | 4-AUC + macro AUPRC + binary + Brier; **calibration required** (sigmoid; isotonic if min_pos≥30) |
+| Ablation pass | T1−D1 CI lo>0; oracle headroom/kill on **O1−D1a** |
+| B4 blocked by B2? | **No** |
+
+### Critique disposition highlights
+- **Accepted:** matched aux oracle baseline (D1a); non-aux Ŷ rule; AUPRC/cal; Stage-1 family pin; user-bar fallback; C1 manifest snapshot.
+- **Rejected:** mandatory daily Stage-1 for v1; Path A +1pp block bar as ablation rule; re-clean.
+
+### Next
+User go → implement `training/path_b/b2/` per PLAN_B2 run ladder (smoke → s1 → grid → REPORT_B2).
+
+---
+
+## 2026-07-15 — B2 implemented + full grid + freeze
+
+**Plan:** `PLAN_B2.md`. **Package:** `training/path_b/b2/`. **Report:** `REPORT_B2.md`.
+
+### Runs
+| Run | Role |
+|---|---|
+| `b2_smoke_20260715` | pipeline smoke (non-claim) |
+| **`b2_grid_20260715`** | claim grid (50×2 Stage-2 trials; Stage-1 30/target) |
+
+### Stage-1
+- Val mean R² **0.047**; gate mean/sd/tar R²>0 **pass**
+- Test mean R² **0.015** — weak emulator from W0 GREEN
+
+### Stage-2 test (claim)
+| Arm | 4-AUC | Binary | Notes |
+|---|---:|---:|---|
+| D0 | **0.6662** | 0.6889 | **exact** Path A W0 match |
+| D1 | **0.7378** | 0.8309 | **exact** Path A C1 match |
+| T0 | 0.6706 | 0.6812 | +Ŷ on W0 |
+| T1 | **0.7345** | 0.8141 | +Ŷ on C1 |
+| D1a | 0.7289 | 0.8298 | aux-matched direct |
+| O1 | **0.8227** | 0.8768 | true CGM oracle |
+
+### Decision bars
+| Bar | Result |
+|---|---|
+| T1−D1 ΔAUC | **−0.003** CI [−0.019,+0.011] lo>0 **False** → ablation **fail** |
+| T0−D0 ΔAUC | **+0.004** CI [−0.015,+0.024] lo>0 **False** → fail |
+| User beat C1 | **Fail** (T1 < freeze) |
+| O1−D1a headroom | **+0.094** CI [+0.058,+0.130] → **pass** (Stage-1 bottleneck) |
+| Kill pivot | not triggered |
+
+### Locks / freeze
+| Topic | Decision |
+|---|---|
+| B2 predicted two-stage | **Closed null** (and slightly harms binary vs D1) |
+| **Any deployable B2 arm beat C1?** | **No.** Best deployable = D1 ≡ C1. T1 loses. |
+| Person-CGM oracle ceiling | **Real** (~+9 pp 4-AUC on aux-matched C1); O1 is **not** a deployable C1-beater claim |
+| D1/D0 protocol parity | Confirmed exact vs Path A freeze |
+| Further B2 HPO / daily Stage-1 / C1→glu Stage-1 | **Frozen** — optional footnotes only; not required to close B2 (`REPORT_B2` §7) |
+| Ladder next | **B4 → B3** |
+
+### Impl critique disposition (pre-run)
+- Blockers: none. Wired `assert_no_leakage`; smoke min-class vs K-fold guard; Stage-1 GPU fallback error context.
+
+---
+
+## 2026-07-15 — B4 data readiness + plan (pre-critique)
+
+**Plan:** `PLAN_B4.md` (later critiqued → implemented → A+B+hard concluded).
+
+### Data readiness verdict
+| Topic | Decision |
+|---|---|
+| Re-clean for B4? | **No** — `clean/*` + pools + shared windows sufficient |
+| Pool / window policy change? | **No** — keep `wearable_core` 1824 / `aux_eligible` 1685 |
+| Existing FE enough to train B4? | **No** — need **5-min multi-modal aligned grid** (View B) |
+| Grid buildable from current clean? | **Yes** — additive `run_fe` only |
+| Concurrent wear | **Dense enough** — probe n=30 aux: median CGM∩HR **~220 h** at 5-min bins; frac CGM bins with HR **~0.95**; all aux span-overlap ≥72h |
+| SpO₂ | Optional only (∩aux ~1380); not a clean gap |
+
+### Why FE is required (not optional)
+B1/B2 used **daily / person scalar CGM summaries**. B4 headline is **full CGM trajectory** supervision — needs person × 5-min wearable + CGM + masks. Documented missing since `PROCESSED.md` / `FEATURES.md` §8 (b-grid) / B1 data plan.
+
+### Design direction (post-critique locks — see `PLAN_B4.md` §8)
+- **B4-A first:** seq2seq multi-task (encoder + masked traj decoder + class head); class on full core; traj on aux concurrent bins only.
+- **B4-B second:** rep-distill (same package); not B3 logit-KD.
+- **User bar:** deployable **Sλ+C1** vs matched **D1/C1** (0.7378 / 0.8309).
+- **FE knobs:** 5-min UTC bins; site-local ToD via `zone`; **T=7d/2016**; channels hr/stress/rr/steps/intensity/asleep + cgm target + tod; no re-clean.
+
+### Critique disposition (accepted blockers)
+| ID | Fix |
+|---|---|
+| B1 subwindow CGM∩HR | **Wear/HR density only** train+infer; CGM only in traj mask |
+| B2 C1 fusion | Ambition primary = **GBM Stage-2 (z ∥ C1)**; neural concat diagnostic only |
+| B3 D1 pin | Same core test pids; prefer re-fit D1 in `b4/` |
+| Pad / short support | Right-pad; `T_min=1008`; report pad frac + drops |
+| Traj gate | Pearson **and** beat global train-aux mean RMSE |
+| B4-B z_T | Student trains on train `z_T` only |
+| CNN vs B1 BiLSTM | **Not** mandatory claim arm (partial reject) |
+
+### Next
+**User go** → implement FE `grid_5min` then `training/path_b/b4/` per `PLAN_B4.md` run ladder. **Do not implement until go.**
+
+---
+
+## 2026-07-15 — B4 implementation (pre-smoke; critique tooling failed)
+
+**User go received.** Code landed; **critiquer subagent timed out twice** (5min + 3min). Parent performed plan-lock audit + fixes before any data run.
+
+### Code landed
+| Path | Role |
+|---|---|
+| `pipeline/fe/grid_5min.py` | View-B 5-min grid + `choose_subwindow_start` (wear-only) |
+| `pipeline/run_fe.py` / `config.yaml` | block `grid_5min` |
+| `training/path_b/b4/` | data/model/train/hybrid/run + config |
+
+### Parent audit (approve smoke)
+| Check | Result |
+|---|---|
+| CGM not in encoder `feature_cols` | **pass** |
+| Subwindow API wear-only | **pass** (+ unit density tests) |
+| traj_mask = wear ∧ cgm ∧ aux | **pass** |
+| Feature leakage scan (grid/person cols) | **pass** (no pool flags) |
+| D1 `pid_allow=bundle.pids` for pairing | **pass** (added) |
+| Ambition head = GBM(z∥C1) | **pass** (`hybrid.py`) |
+| Operator bug stress/rr masks | **fixed** |
+| ToD zeroed on non-wear | **fixed** — keep tod_sin/cos always |
+
+### Explicit non-blockers for smoke
+- B4-B / O-traj / neural-C1 diagnostic deferred (plan).
+- Full FE acceptance (UAB, full-aux concurrent) runs with FE full, not required to start 20-pid smoke.
+- Critiquer timeout ≠ plan reject; re-critique after smoke if needed.
+
+### Dual critiquer (smoke-readiness)
+| Agent | Model | Result |
+|---|---|---|
+| critiquer | `grok-cli/grok-4.5:high` | **approve** smoke; no blockers; incomplete-grid footgun (med) |
+| critiquer | `opencode-go/glm-5.2:high` | **timeout** (3rd GLM fail this session) |
+
+**Parent disposition:** accept Grok approve + parent lock audit. Fixes before smoke: assert full-core grid coverage; soft shrink only when `max_participants` set; empty-val hard error.
+
+### Smoke results (2026-07-15)
+
+**FE** `run_fe --blocks grid_5min --max-participants 20` (~6s):
+- grid **75924 × 18**, 20 pids; person concurrent_hours median **~216 h** (min ~186)
+- wear_bin_valid mean ~0.75; cgm ~0.74; subwindow CGM-free unit OK
+- Smoke pids all UW/LA (early person_id prefer) — UAB tz not covered in n=20
+
+**Train** `b4_smoke_20260715 --quick --mode neural --max-participants 20` (~13s CPU):
+- splits 14/2/3; 0 T_min drops; pad_frac 0; traj_bins train 24k
+- λ=0/1.0 pipeline OK; metrics **not claimable** (n tiny; val AUC noise)
+- Artifacts: `training/path_b/b4/artifacts/b4_smoke_20260715/`
+
+### FE full acceptance (2026-07-15)
+
+**Command:** `python -m pipeline.run_fe --blocks grid_5min` (~381s, 6 workers).
+
+| Gate | Result |
+|---|---|
+| Shape | grid **6,883,255 × 18**, person **1824 × 11** (= wearable_core) |
+| Leakage scan | **pass** (grid + person) |
+| Aux concurrent hours | n=1685; median **210 h**; p10 **172 h**; **min 68.7 h** (median ≥72 **pass**; ~few aux below 72h — mask handles) |
+| Wear in 7d subwindow (n=100 sample) | median **1846** bins; min 1389; **100% ≥ T_min 1008** |
+| UAB 7025 | zone Chicago; ToD at 17:00 UTC → local **12:00** (correct CDT); concurrent ~207 h |
+| `watch_green` | untouched 1824×31 |
+
+### Smoke (prior)
+- FE 20 pids + train `b4_smoke_20260715` neural quick — pipeline OK, metrics non-claimable.
+
+### Claim grid `b4_grid_20260715` (ROCm 5600) — B4-A concluded
+
+**Report:** `REPORT_B4.md`.
+
+| Arm | test 4-AUC | test bin | vs bar |
+|---|---:|---:|---|
+| S0 (λ=0 neural) | 0.646 | 0.642 | floor OK |
+| S0.3 / S1.0 | 0.637 / 0.639 | — | Sλ−S0 **null** |
+| D1 re-fit | **0.736** | 0.809 | Δ freeze 4-AUC −0.0019 (fair) |
+| S0+C1 hybrid | 0.713 | 0.819 | **< D1** |
+| S0.3+C1 / S1+C1 | 0.714 / 0.703 | — | **no raise** |
+
+**Bars:** ambition fail; multi-task fail; traj Pearson OK at λ>0 (~0.22–0.26). One pid dropped T_min (7189). Hybrid emb pickle bug fixed mid-run.
+
+**Locks**
+| Topic | Decision |
+|---|---|
+| B4-A deployable beat C1? | **No** |
+| B4-A traj multi-task | **Closed null** |
+| B4-A hybrid z∥C1 | **Harms vs D1** under this recipe |
+| B4-B | **Done** (easy + hard; null) — see later entries |
+| Ladder next | **B3 last** |
+
+### Next (historical at B4-A close)
+B4-B then B3 — both B4-B easy and hard now concluded.
+
+---
+
+## 2026-07-15 — B4-B rep-distill claim (`b4b_distill_20260715`)
+
+**Report:** `REPORT_B4_B.md`. **Package:** `b4/distill.py`; modes `distill` / `distill_hybrid`.
+
+### Design locks applied
+| Topic | Lock |
+|---|---|
+| Teacher | CGM-AE: X∥cgm → traj MSE only; **no class head in loss** |
+| Student | X only; CE + μ MSE(z_S, sg z_T); distill on **train∩aux** only |
+| μ | {0, 0.3, 1.0}; μ=0 control |
+| Hybrid | z∥C1 GBM vs matched D1 |
+
+### Results (test)
+| Arm | 4-AUC | Notes |
+|---|---:|---|
+| Teacher val traj | RMSE **0.175**, Pearson **~0.99** | privilege works |
+| Student μ=0 | **0.646** | = B4-A S0 control |
+| Student μ=0.3 | **0.625** | **hurts** vs μ0 CI entirely &lt;0 |
+| Student μ=1.0 | **0.636** | null vs μ0 |
+| D1 | **0.736** | matched |
+| Dμ1+C1 best hybrid | **0.735** | ΔD1 **−0.001** lo≯0 |
+
+**Bars:** distill raise **fail**; ambition **fail**. Cosine alignment **pass** (0.09→0.64).
+
+### Locks / freeze
+| Topic | Decision |
+|---|---|
+| B4-B rep-distill | **Closed null** (can hurt neural AUC) |
+| B4 overall (A+B) | **No deployable C1 raise** |
+| Further B4 churn | **Frozen** unless new `PLAN_*` |
+| Ladder next | **B3 last** |
+
+---
+
+## 2026-07-15 — B4-B hard-teacher sensitivity (H1/H2)
+
+**Plan:** `PLAN_B4_B_HARD.md`. **Report:** `REPORT_B4_B_HARD.md`.  
+**Runs:** `b4b_hard_h1_20260715` (`cgm_only`), `b4b_hard_h2_20260715` (`wear_cgm`).
+
+### Why
+Easy B4-B teacher (X∥cgm) Pearson ~0.99 may have been “copy CGM.” Hard modes test whether that artifact caused the null.
+
+### Results (test 4-AUC)
+| | μ=0 | μ=0.3 | μ=1 | best hybrid | vs D1 0.736 |
+|---|---:|---:|---:|---:|---|
+| H1 cgm_only | 0.646 | **0.626 hurt** | 0.634 | 0.723 | **fail** |
+| H2 wear_cgm | 0.646 | **0.620 hurt** | 0.638 | 0.713 | **fail** |
+| Easy (ref) | 0.646 | 0.625 hurt | 0.636 | 0.735 | fail |
+
+H2 teacher val Pearson **~0.30** (hard map real). Distill cosine still ↑ with μ.
+
+### Locks
+| Topic | Decision |
+|---|---|
+| Easy-teacher artifact? | **Not binding** — hard teachers also null |
+| B4 LUPI (A+B easy+hard) | **Closed null** for deployable C1 raise |
+| CLI | `--teacher-mode {easy,cgm_only,wear_cgm}` |
+| Next | **B3** |
+

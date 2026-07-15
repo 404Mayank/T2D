@@ -5,7 +5,7 @@ Paper headline claim = **watch-only**. Clinical self-report = secondary / deploy
 
 ## Status (2026-07-15)
 
-**Path A tabular is frozen.** **Path B B1 is frozen.** Next: **B2 → B4 → B3 last**.
+**Path A tabular is frozen.** **Path B B1, B2, and B4 (A+B easy+hard) are concluded.** Next: **B3 last**.
 
 ### Path A (unchanged)
 
@@ -22,15 +22,15 @@ C1 sensitivities (smoke/obs/via): all bar-fail. Authority: `training/path_a_bloc
 
 | Stage | Role | Status |
 |---|---|---|
-| **B1** | Controlled multi-task (± day-level CGM) | **Frozen** — pure-seq test **0.652**; λ=0.5 multi-task **null**; GREEN late-fuse **no raise** |
-| **B2** | Two-stage ablation | **next** |
-| **B4** | Seq2seq CGM trajectory + rep-distill (headline) | later |
-| **B3** | Logit-KD baseline (Diasense) | last |
+| **B1** | Controlled multi-task (± day-level CGM) | **Frozen** — pure-seq **0.652**; multi-task **null**; GREEN fuse no raise |
+| **B2** | Two-stage glucose emulator → T2D | **Frozen** — **no deployable arm beats C1**; T1 0.735; oracle O1 **0.823** (non-deployable, +0.09 vs D1a) |
+| **B4** | Seq2seq traj multi-task + rep-distill (easy + hard teachers) | **Concluded** — **no deployable raise** vs C1; see `REPORT_B4*.md` |
+| **B3** | Logit-KD baseline (Diasense) | **next** |
 
-B1 pre-fix grid (~0.51) was broken sleep FE + unscaled inputs — not a ceiling. Authority: `training/path_b/REPORT_B1.md`.
+**Who beats C1?** Only **oracle O1** (true CGM, aux pool) — not deployable. B1/B2/B4 deployable arms all ≤ C1. Privilege is real (oracle / teacher probes); wear→glucose handoff under tested recipes is null. Authority: `REPORT_B1.md`, `REPORT_B2.md`, `REPORT_B4.md`, `REPORT_B4_B.md`, `REPORT_B4_B_HARD.md`.
 
-**Done:** cleaning/FE → Path A freeze → B1 fix/retest/fuse/freeze.  
-**Left:** B2 → B4 → B3. Optional Path A leftovers: diet, GREEN v2 FE, ordinal.
+**Done:** cleaning/FE → Path A freeze → B1 → B2 → B4.  
+**Left:** B3. Optional Path A leftovers: diet, GREEN v2 FE, ordinal.
 
 ## Layout
 
@@ -40,7 +40,7 @@ B1 pre-fix grid (~0.51) was broken sleep FE + unscaled inputs — not a ceiling.
 | `data/processed/` | consumer tables (gitignored) |
 | `training/path_a_watch/` | watch-only GBM floor |
 | `training/path_a_blocks/` | block ladder + wrap (frozen) |
-| `training/path_b/` | privileged CGM ladder (B1 frozen → B2…) |
+| `training/path_b/` | privileged CGM ladder (B1+B2+B4 concluded → B3) |
 | `AGENTS.md` | doc index + agent process locks |
 | `Training.md` | methodology |
 
@@ -48,42 +48,12 @@ Authority: `DATA_AUDIT.md` → `CLEANING.md` → `PROCESSED.md` → `FEATURES.md
 
 ## Setup
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r training/path_a_watch/requirements.txt
-# Path B (torch) extras when needed:
-# pip install -r training/path_b/b1/requirements.txt
-# AMD dGPU for LightGBM OpenCL (this machine):
-export DRI_PRIME=1
-# Path B ROCm: export HIP_VISIBLE_DEVICES=0
-```
-
-Raw data and `data/processed/` are local (not in git). Training artifacts are gitignored.
-
-## Run (repro)
+See `COMPUTE.md` and package READMEs. Typical:
 
 ```bash
-export DRI_PRIME=1
-# Path A
-.venv/bin/python -m training.path_a_watch --run-id <id>
-.venv/bin/python -m training.path_a_blocks.run_1a
-.venv/bin/python -m training.path_a_blocks.run_1c --feature-set scores
-.venv/bin/python -m training.path_a_blocks.build_minimal_ranks
-.venv/bin/python -m training.path_a_blocks.run_wrap --all
-
-# Path B B1 (frozen package; reference only)
-export HIP_VISIBLE_DEVICES=0
-.venv/bin/python -m training.path_b.b1 --run-id <id> --lambdas 0,0.5 --device cuda
+.venv/bin/python -m pipeline.run_fe --blocks watch          # Path A GREEN
+.venv/bin/python -m pipeline.run_fe --blocks grid_5min      # Path B4 5-min grid
+.venv/bin/python -m training.path_a_watch ...
+.venv/bin/python -m training.path_b.b2 --run-id b2_grid_YYYYMMDD
+.venv/bin/python -m training.path_b.b4 --run-id b4_grid_YYYYMMDD --mode all --device cuda
 ```
-
-CatBoost is CPU-only here; LightGBM may use OpenCL GPU. B1 uses ROCm torch with `cudnn` disabled on gfx1010.
-
-## Docs worth reading
-
-- `T2D.md` — north star  
-- `AGENTS.md` — file index + plan→critique→implement loop  
-- `training/path_a_blocks/REPORT_A_WRAP.md` — Path A freeze  
-- `training/path_b/REPORT_B1.md` — B1 freeze  
-- `training/path_b/DECISIONS.md` — Path B locks  
-- `COMPUTE.md` — machines / GPU notes  

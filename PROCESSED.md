@@ -38,6 +38,8 @@ data/processed/                    # gitignored; regenerate via pipeline
 │   ├── cgm_daily.parquet          # Path B: person_id × day_local CGM 8-vector
 │   ├── cgm_person.parquet         # Path B: person-level CGM aggregates (B2-ready)
 │   ├── watch_daily.parquet        # Path B: person_id × day_local wearable vector
+│   ├── grid_5min.parquet          # Path B4: person × 5-min multi-modal grid
+│   ├── grid_5min_person.parquet   # Path B4: person quality / concurrent stats
 │   └── clinical_keep_all.parquet
 └── reports/
     ├── coverage_survival.csv
@@ -212,7 +214,7 @@ Acceptance snapshot (2026-07-14): aux median valid CGM days **11**; core median 
 
 Detail / locks: `training/path_b/PLAN_B1_DATA.md`, `training/path_b/DECISIONS.md`.
 
-### `clean/*.parquet` (raw series for re-FE / B4 later)
+### `clean/*.parquet` (raw series for re-FE)
 
 - UTC columns (`timestamp`, `start_time`, …) are authoritative for wall-clock re-derive.
 - `*_local` columns exist but are **parquet single-tz (LA)** — Path B FE re-converts via `zone`.
@@ -220,7 +222,13 @@ Detail / locks: `training/path_b/PLAN_B1_DATA.md`, `training/path_b/DECISIONS.md
 - One row-group per `person_id` (filter-friendly).
 - CGM is train-time supervision only — not a watch-only deployable feature.
 - Do not re-apply raw sentinels; do not re-window unless you change policy and re-run clean.
-- **5-min multi-modal aligned grid is not built yet** (B4 View B).
+- **5-min multi-modal aligned grid (B4 View B):** `features/grid_5min.parquet` +
+  `features/grid_5min_person.parquet` via `python -m pipeline.run_fe --blocks grid_5min`.
+  UTC 5-min bins; site-local ToD from `zone`; channels hr/stress/rr/steps/intensity/asleep/cgm/tod_*;
+  masks `hr_bin_valid` / `cgm_bin_valid` / `wear_bin_valid`. Subwindow selection (wear-density,
+  CGM-free) is **train-time** in `training/path_b/b4/data.py`, not stored in FE.
+  **Full core built 2026-07-15:** 6.88M bins × 1824 pids; aux median concurrent
+  ~210 h. B4 training concluded (no deployable raise vs C1). See `PLAN_B4.md` / `REPORT_B4*.md`.
 
 ---
 

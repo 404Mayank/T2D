@@ -24,6 +24,7 @@ import pandas as pd
 from pipeline.clean.clinical import leakage_column_scan
 from pipeline.config import ensure_out_dirs, load_config
 from pipeline.fe.cgm_daily import build_cgm_daily
+from pipeline.fe.grid_5min import build_grid_5min, write_grid_outputs
 from pipeline.fe.watch_daily import build_watch_daily
 from pipeline.fe.watch_green import build_watch_green
 from pipeline.io import write_parquet
@@ -36,7 +37,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument(
         "--blocks",
         default="watch",
-        help="Comma list: watch,cgm_daily,watch_daily,onboarding,comorbidity,mood,diet",
+        help="Comma list: watch,cgm_daily,watch_daily,grid_5min,onboarding,comorbidity,mood,diet",
     )
     ap.add_argument("--max-participants", type=int, default=None)
     args = ap.parse_args(argv)
@@ -127,9 +128,36 @@ def main(argv: list[str] | None = None) -> int:
         }
         print(f"  {feat.shape} → {out} ({report['blocks']['watch_daily']['seconds']}s)")
 
+    if "grid_5min" in want and (cfg.get("features") or {}).get("grid_5min", {}).get(
+        "enabled", True
+    ):
+        print("=== grid_5min (+ grid_5min_person) ===")
+        t0 = time.time()
+        grid, person = build_grid_5min(cfg, masks)
+        for name, feat in (("grid_5min", grid), ("grid_5min_person", person)):
+            bad = leakage_column_scan(list(feat.columns), cfg)
+            if bad:
+                raise AssertionError(f"Leakage/meta columns in {name}: {bad}")
+        paths = write_grid_outputs(cfg, grid, person)
+        report["blocks"]["grid_5min"] = {
+            "shape": list(grid.shape),
+            "seconds": round(time.time() - t0, 2),
+            "paths": paths,
+            "n_rows": len(grid),
+            "n_pids": int(grid["person_id"].nunique()) if len(grid) else 0,
+            "person_shape": list(person.shape),
+            "concurrent_hours_median": (
+                float(person["concurrent_hours"].median()) if len(person) else None
+            ),
+        }
+        print(
+            f"  grid {grid.shape} person {person.shape} → {paths} "
+            f"({report['blocks']['grid_5min']['seconds']}s)"
+        )
+
     clinical_blocks = {"onboarding", "comorbidity", "mood", "diet", "smoking"}
     for b in want:
-        if b in {"watch", "cgm_daily", "watch_daily"}:
+        if b in {"watch", "cgm_daily", "watch_daily", "grid_5min"}:
             continue
         if b not in clinical_blocks:
             print(f"  skip unknown block: {b}")

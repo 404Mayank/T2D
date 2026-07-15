@@ -1,0 +1,114 @@
+# Path B2 — two-stage glucose emulator → T2D
+# Authority: training/path_b/PLAN_B2.md
+
+run:
+  seed: 42
+  n_jobs: -1
+  n_trials: 50
+  stage1_n_trials: 30
+  auc_tie_eps: 0.005
+  es_rounds: 80
+  n_estimators_max: 4000
+  stage1_n_estimators: 500
+  stage1_es_rounds: 50
+  lgbm_device: auto
+  catboost_task_type: CPU
+  catboost_boosting_type: Ordered
+  catboost_boosting_fallback: Plain
+  bootstrap_n: 2000
+  bootstrap_ci: 0.95
+  oof_folds: 5
+
+paths:
+  watch_green: data/processed/features/watch_green.parquet
+  onboarding: data/processed/features/onboarding.parquet
+  mood: data/processed/features/mood.parquet
+  cgm_person: data/processed/features/cgm_person.parquet
+  pool_masks: data/processed/meta/pool_masks.parquet
+  path_a_blocks_config: training/path_a_blocks/config.yaml
+  artifacts_root: training/path_b/b2/artifacts
+  frozen_c1_run_id: mood_scores_20260714_014415
+  frozen_c1_artifacts: training/path_a_blocks/artifacts
+
+data:
+  expected_n_core: 1824
+  expected_n_aux: 1685
+  expected_c1_n_feat: 47
+  id_col: person_id
+  label_col: label
+  split_col: recommended_split
+  glu_targets:
+    - cgm_mean_daymean
+    - cgm_sd_daymean
+    - cgm_cv_daymean
+    - cgm_min_daymean
+    - cgm_max_daymean
+    - cgm_tir_70_180_daymean
+    - cgm_tbr_70_daymean
+    - cgm_tar_180_daymean
+  # coverage / wear-duration — never Stage-1 target or Stage-2 feature
+  glu_forbid:
+    - n_valid_days
+    - cgm_n_total
+    - n_days
+  pred_prefix: "yhat_"
+  true_prefix: "ytrue_"
+
+class_weights:
+  lightgbm: balanced
+  catboost: Balanced
+
+calibration:
+  default_method: sigmoid
+  secondary_method: isotonic
+  min_pos_for_isotonic: 30
+
+# Identical to path_a_blocks (PLAN_B2 pin)
+hpo:
+  lightgbm:
+    learning_rate: [0.01, 0.1]
+    num_leaves: [8, 48]
+    max_depth: [3, 8]
+    min_child_samples: [10, 80]
+    min_split_gain: [0.5, 8.0]
+    colsample_bytree: [0.25, 0.70]
+    subsample: [0.5, 1.0]
+    subsample_freq: [1, 7]
+    reg_alpha: [1.0e-3, 10.0]
+    reg_lambda: [1.0e-3, 10.0]
+  catboost:
+    learning_rate: [0.01, 0.1]
+    depth: [4, 8]
+    l2_leaf_reg: [1.0, 30.0]
+    random_strength: [0.0, 2.0]
+    bagging_temperature: [0.0, 2.0]
+    min_data_in_leaf: [5, 50]
+    border_count: [32, 128]
+
+# Stage-1 default / baseline params (before Optuna)
+stage1_default:
+  learning_rate: 0.05
+  num_leaves: 31
+  max_depth: 6
+  min_child_samples: 20
+  min_split_gain: 0.5
+  colsample_bytree: 0.5
+  subsample: 0.8
+  subsample_freq: 1
+  reg_alpha: 0.1
+  reg_lambda: 1.0
+
+frozen_c1_reference:
+  test_macro_ovr_auc: 0.7378
+  test_binary_auc: 0.8309
+  test_macro_auprc: 0.4687470484302076
+  family: catboost
+
+decision_bars:
+  d1_freeze_drift_tol: 0.01
+  oracle_headroom_pass: 0.02
+  oracle_kill: 0.01
+  stage1_r2_targets:
+    - cgm_mean_daymean
+    - cgm_sd_daymean
+    - cgm_tar_180_daymean

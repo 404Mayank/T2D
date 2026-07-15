@@ -117,35 +117,36 @@ headline — **frozen 2026-07-15**.* Controlled `attn_lstm_64` + day-level 8-vec
 post FE/scale fix, pure-seq test 4-AUC **0.652**; λ=0.5 multi-task **null** (paired boot CI lo≯0);
 GREEN late-fuse **no raise**. Pre-fix ~0.51 grid was broken sleep FE + unscaled inputs — not a
 ceiling. Teammate multi-task null directionally confirmed under controlled backbone. See
-`training/path_b/REPORT_B1.md`. Do **not** reopen B1 λ grids; ladder continues B2 → B4 → B3.
+`training/path_b/REPORT_B1.md`. Do **not** reopen B1 λ grids; ladder **B2 (frozen) → B4 (concluded) → B3 last**.
 
 Do **not** claim B1 > two-stage as established. Research confirms **no universal evidence that
 multi-task beats two-stage** — dataset/task-dependent; task-gradient conflict is real. Run B2
 next and let the ablation decide against the frozen B1 floor.
 
-**B2 — Two-stage (glucose emulator → T2D predictor).** *Ablation.* Modular, debuggable, clean
-deployment story (swap stage 1 for watch inference). Risk: error compounding — stage-1 regression
-errors propagate into stage 2, and the point-estimate handoff is lossy vs a shared embedding.
-Defensible as a rigorous ablation to justify the joint/seq2seq representation; not the method.
+**B2 — Two-stage (glucose emulator → T2D predictor).** *Ablation — **frozen 2026-07-15**.*
+Person GREEN → 8 daymean CGM → C1/W0 Stage-2: predicted handoff **null** (T1 test 4-AUC **0.7345**
+vs matched D1/C1 **0.7378**; Δ CI lo≯0). **No deployable B2 arm beats C1** (best deployable = D1 ≡ C1).
+Oracle true-CGM O1 **0.823** vs matched D1a (**+0.094**) proves headroom but is privileged + aux-only;
+Stage-1 R²~0.05 is the bottleneck. See `training/path_b/REPORT_B2.md` §7 for residual knobs
+(explicitly **not** required). Do **not** reopen B2 claim HPO; B4 done — proceed to B3.
+
+**B4 — Seq2Seq CGM-trajectory + rep-distill (headline cell) — concluded 2026-07-15.**
+5-min multi-modal grid FE + CNN patch encoder. **B4-A** traj multi-task: S0 test 4-AUC **0.646**;
+Sλ−S0 **null**; hybrid z∥C1 best **0.714** &lt; matched D1 **0.736** (≈ freeze C1). Wear→curve Pearson
+~0.14–0.26 (non-degenerate recon, weak transfer). **B4-B** rep-distill (easy X∥cgm + hard
+cgm_only / wear→cgm teachers): student μ&gt;0 **null/hurts**; best hybrid **0.735** still ≯ D1.
+Easy-teacher loophole closed by hard-teacher sensitivity. **No deployable B4 arm beats C1.**
+Privilege remains real (B2 oracle; teacher/CGM probes). Authority: `REPORT_B4.md`,
+`REPORT_B4_B.md`, `REPORT_B4_B_HARD.md`. Do **not** reopen B4 claim grids without a new `PLAN_*`.
 
 **B3 — Knowledge distillation (CGM teacher → wearable student, soft logits).** *Strong baseline to
-beat, not a contribution.* This is the teammate's method (T=2, α=0.3 best; recovers ~20% of the
-teacher's gap). Principled leakage handling via out-of-fold teacher predictions. Your delta over
-it must be a *different* formulation, not a redo.
+beat, not a contribution — **next / last** on the ladder.* This is the teammate's method (T=2,
+α=0.3 best; recovers ~20% of the teacher's gap). Principled leakage handling via out-of-fold
+teacher predictions. Run as controlled Diasense-style baseline after B4 nulls.
 
-**B4 — Seq2Seq CGM-trajectory teacher → T2D head (headline candidate).** A seq2seq model predicts
-the **full CGM trajectory** from wearables (not a scalar / 8 summaries), and the encoder
-representation feeds the T2D head. The teammate regressed 8 scalar summaries, never the curve —
-this is the one aux formulation they didn't touch. Predicting the full glucose curve forces the
-encoder to model glycemic dynamics, a richer inductive bias than regression-to-mean or soft-label
-KD. **This is the real headline candidate.** Complexity is higher (sequence decoder, CGM↔wearable
-timestamp alignment/windowing); needs ablation to confirm the richer decoder actually improves
-downstream T2D AUC.
-
-**Representation distillation under LUPI (the cleanest novelty delta).** Instead of distilling
-soft class logits (B3 / teammate's KD), distill the **glucose-shaped intermediate representation**
-from the teacher into the student. The privileged signal in the features is arguably stronger than
-in the logits. This is a principled, distinct delta and pairs naturally with B4's encoder.
+**Representation distillation under LUPI** was tested as B4-B (easy + hard teachers): cosine
+alignment rises with μ but 4-AUC does not; hybrid still ≤ C1. Residual novelty may still live in
+SSL+aux, attention fusion, or deployment framing — not “redo B4 λ/μ grids.”
 
 ## 5. Additions to the menu (researched this session)
 
@@ -218,19 +219,19 @@ sequence/aux models — not a substitute for locking class weights before featur
      CORN neural ordinal still optional; cal remains diagnostic. **Path B / B1 frozen (2026-07-15):**
      C1 sleep FE + C2 input z-score fixed; pure-seq test 4-AUC **0.652** (pre-fix 0.51 was broken inputs);
      multi-task λ=0.5 **null** (Δ≈0, CI lo≯0); GREEN late-fuse **no raise** (0.638). Authority:
-     `training/path_b/REPORT_B1.md` + `DECISIONS.md`. **Next: B2 then B4 (B3 last).**
+     `training/path_b/REPORT_B1.md` + `REPORT_B2.md` + `REPORT_B4*.md` + `DECISIONS.md`.
+     **Next: B3 last.**
 2. **Controlled B1 ablation** — **done / frozen.** Same 64-hidden attention backbone, day-level glucose
    head, summary-CGM target. Multi-task is a clean null after FE/scale repair; pure spine does not
    beat Path A watch GBM (0.666). Not the headline.
-3. **B4 (seq2seq full-CGM-trajectory teacher → T2D head)** as the **headline candidate**, paired
-   with **representation distillation** under a LUPI framing — the cleanest novelty delta and the
-   one aux formulation untouched by the parallel attempt.
-4. **B2 (two-stage) ablation** — proves the joint/seq2seq representation does work the
-   point-estimate handoff can't.
-5. **SSL-pretrained backbone** (gated) as the lever to make the raw 1-min end-to-end model viable
+3. **B2 (two-stage) ablation** — **done / frozen.** Predicted person-CGM handoff null; oracle headroom real.
+4. **B4 (seq2seq traj + rep-distill)** — **done / concluded null** for deployable raise (A + B easy +
+   hard teachers). Grid FE + package `training/path_b/b4/`. See `REPORT_B4*.md`.
+5. **B3 logit-KD baseline** — **next / last** (Diasense-style; not a contribution as-is).
+6. **SSL-pretrained backbone** (gated) as the lever to make the raw 1-min end-to-end model viable
    (instead of a cold-start CNN the hourly-failure prior says will underperform). MOMENT-embedding
    + GBM as a one-afternoon high-variance side bet.
-6. **Generative augmentation + calibration** wherever the sequence/aux models show minority-class
+7. **Generative augmentation + calibration** wherever the sequence/aux models show minority-class
    data hunger or miscalibration.
 
 ## 8. What is explicitly not the contribution

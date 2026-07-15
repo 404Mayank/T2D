@@ -398,6 +398,12 @@ features:
     enabled: true
     min_hr_minutes: 60
     require_pool: wearable_core
+  # Path B4: 5-min multi-modal aligned grid (View B)
+  grid_5min:
+    enabled: true
+    min_hr_samples_per_bin: 2   # of ~5 expected 1-min HR samples
+    require_pool: wearable_core
+    shard: false               # true → features/grid_5min/{pid}.parquet + index
   blocks:
     # Which clinical blocks to write as separate matrices
     write:

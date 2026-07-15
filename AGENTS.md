@@ -24,14 +24,22 @@
 | `training/path_a_blocks/REPORT_A_WRAP.md` | **Path A freeze** + wrap + C1 sensitivity analytics |
 | `training/path_a_blocks/PLAN_SENS_C1.md` | Post-freeze smoke/obs/via sensitivities (all bar-fail) |
 | `training/path_a_blocks/DECISIONS.md` | Living decisions log for blocks |
-| `training/path_b/` | **Path B** (privileged CGM): B1 **frozen** → B2 → B4 → B3 |
-| `training/path_b/b1/` | B1 package (concluded; GREEN fuse flag available) |
+| `training/path_b/` | **Path B** (privileged CGM): B1 **frozen** → B2 **frozen** → B4 **A+B concluded** → B3 |
+| `training/path_b/b1/` | B1 package (concluded) |
+| `training/path_b/b2/` | B2 package (concluded; two-stage tabular) |
 | `training/path_b/PLAN_B1_DATA.md` | B1 data readiness + daily FE plan |
 | `training/path_b/PLAN_B1_TRAIN.md` | B1 training protocol locks |
 | `training/path_b/PLAN_B1_IMPL.md` | B1 code-shape plan |
 | `training/path_b/PLAN_B1_FIX.md` | C1/C2 fix plan, gates, critique disposition |
+| `training/path_b/PLAN_B2.md` | B2 two-stage plan (implemented) |
+| `training/path_b/PLAN_B4.md` | B4 trajectory + rep-distill plan (A+B concluded) |
 | `training/path_b/DECISIONS.md` | Path B decisions / acceptance log |
-| `training/path_b/REPORT_B1.md` | **B1 final freeze report** (post-fix + GREEN confirm) |
+| `training/path_b/REPORT_B1.md` | **B1 final freeze report** |
+| `training/path_b/REPORT_B2.md` | **B2 final freeze report** (null predicted; oracle headroom) |
+| `training/path_b/REPORT_B4.md` | **B4-A claim report** (traj multi-task null; hybrid < C1) |
+| `training/path_b/REPORT_B4_B.md` | **B4-B claim report** (rep-distill null; teacher OK) |
+| `training/path_b/REPORT_B4_B_HARD.md` | **B4-B hard-teacher** H1/H2 null (easy-teacher gap closed) |
+| `training/path_b/PLAN_B4_B_HARD.md` | Hard-teacher sensitivity plan |
 | `training/path_b/AUDIT_B1_UNDERPERF.md` | B1 underperf root-cause audit (sleep unit + scaling + research) |
 
 **Authority:** `DATA_AUDIT.md` → `CLEANING.md` → `PROCESSED.md` → `FEATURES.md` → `Training.md`.  
@@ -56,7 +64,7 @@ Skip plan/critique only for **small patches** (typo, one-liner, doc-only nits, p
 | **Subagents** | Use for isolation/parallel; **parent synthesizes**. Prefer `explorer.logic` for flow bugs, `web-researcher` for external methods. |
 
 **Other standing rules**
-- Path B ladder: **B1 (frozen) → B2 → B4 → B3 last**. Do not silently reorder.
+- Path B ladder: **B1 (frozen) → B2 (frozen) → B4 A+B (concluded) → B3 last**. Do not silently reorder.
 - **Never claim Path A numbers changed** unless Path A was re-run. Path A wrap is frozen.
 - Pre-fix / invalidated runs stay labeled as such (e.g. B1 `b1_grid_20260714`); new run ids after protocol/FE fixes — do not overwrite old “success” interpretations.
 - Protocol locks in `PLAN_*` / `DECISIONS` are not optional; open a new plan to change them.

@@ -35,9 +35,10 @@ Historical framing that still motivates deployment:
 2. **T2D predictor:** use wearables (+ glucose-shaped representation at train time) for the 4-class label.
 
 **Headline formulation** (see `Training.md`): not plain "regress glucose then feed," and not
-Diasense logit-KD. Primary novelty candidate is **B4 — seq2seq full-CGM-trajectory teacher → T2D
-head**, with **representation distillation under LUPI**. Path A (direct LightGBM+CatBoost on
-summary features) is built first and is the floor every aux result is measured against.
+Diasense logit-KD. Primary novelty candidate was **B4 — seq2seq full-CGM-trajectory teacher → T2D
+head**, with **representation distillation under LUPI** — **ran 2026-07-15; no deployable raise
+vs C1** (`REPORT_B4*.md`). Path A (direct LightGBM+CatBoost on summary features) remains the floor
+every aux result is measured against.
 
 **Path A status (2026-07-14, frozen):** Watch-only CatBoost floor test 4-AUC **0.666** / binary
 **0.689** (`training/path_a_watch/`). Deployable secondary = **watch+onboarding+mood (C1)** 4-AUC
@@ -45,8 +46,11 @@ summary features) is built first and is the floor every aux result is measured a
 minimal retention fail → keep full C1). Post-freeze sensitivities on C1 (smoking `susmk*`,
 `mhoccur_obs`, `via1–3`, joint) all **bar-fail** — stack unchanged. Smoking was an FE gap (raw codes
 `susmk*` not `smok*`); extractor added, no modeling lift. Freeze write-up:
-`training/path_a_blocks/REPORT_A_WRAP.md`. **Next: Path B** (privileged CGM / distillation).
-Optional leftovers: diet block, GREEN v2 FE, CORN.
+`training/path_a_blocks/REPORT_A_WRAP.md`.
+
+**Path B status (2026-07-15):** B1/B2/B4 **concluded** — no deployable arm beats C1; B2 oracle
+shows privilege is real. **Next: B3** (logit-KD baseline). Optional Path A leftovers: diet block,
+GREEN v2 FE, CORN.
 
 ## Diasense — teammate baseline to beat / stay distinct from
 

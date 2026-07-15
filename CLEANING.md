@@ -75,11 +75,14 @@ X_train, y_train = train[feature_cols], train["label"]
 - Post-clean pool masks (`wearable_core`, `aux_eligible`, …)
 - Path A **View A** feature matrices: GREEN watch summaries + clinical blocks
 
-### Out of scope (v1)
+### Out of scope (v1 clean stages)
 - Mutating canonical raw data (`convert_pipeline.py` stays separate)
-- Path B View B: multi-modal aligned grids / CGM trajectory windows
 - Model training, Optuna, SHAP (consumers of `data/processed/features/`)
 - ECG / environment modalities
+
+**Note:** Path B View B **5-min multi-modal grid** is **built** as FE (not clean):
+`python -m pipeline.run_fe --blocks grid_5min` → `features/grid_5min*.parquet` (2026-07-15).
+Clean stages still do not re-window for concurrent minute overlap; FE emits concurrent masks.
 
 ### Design principles
 1. **Raw is immutable.** All outputs land in `data/processed/`.
@@ -333,8 +336,9 @@ Built from **cleaned, windowed** series (not raw presence).
 
 Sensitivity columns: `hr_cov_frac_ge_{0.25,0.35,0.5,0.8}`, `aux_overlap_ge_{0,24,72}h`.
 
-**Note:** overlap is span intersection, not minute-level concurrent wear. Adequate for
-Path A gating; Path B should tighten when View B is built.
+**Note:** pool `cgm_hr_overlap_hours` is **span** intersection, not minute-level concurrent wear.
+Adequate for Path A / aux gates. View B FE (`grid_5min`) emits **bin-level concurrent** masks
+(`wear_bin_valid` ∩ `cgm_bin_valid`); train-time subwindows are wear-density (CGM-free).
 
 `reports/coverage_survival.csv` summarizes n at each gate.
 
@@ -462,7 +466,7 @@ data/processed/
 | B4.3 year-long window | Shared HR window; policy config |
 | B4.4 dedup | Stage 3 |
 | B4.5 clinical date formats | Partial (study_visit_date for age check only) |
-| B4.6 common grid View B | **Deferred** (Path B) |
+| B4.6 common grid View B | **Done as FE** (`run_fe --blocks grid_5min`, 2026-07-15) — not a clean stage |
 | B5 pools post-sentinel | Stage 5 |
 | B6.1–B6.2 hard-exclude | Catalog + leakage scan |
 | B6.3 condition_occurrence | Not pivoted (self-report dup) |
@@ -704,7 +708,7 @@ what to turn when you want a sensitivity run.
 2. Sensitivity: `force_all_to_window: true` vs default (feature stability vs wear length)
 3. Optional clamp / non-overlap fix for `sedentary_min_per_day` &gt; 1440
 4. MVPA map sensitivity (`walking` as moderate)
-5. View B alignment for Path B (grid, **concurrent** CGM∩HR overlap, trajectories)
+5. ~~View B alignment for Path B~~ → **done as FE** (`grid_5min`; concurrent bin masks; B4 training)
 6. B2.6 undocumented sentinel scan
 7. Optional labs upper-bound matrix
 8. FE single-pass speedup if re-FE becomes frequent

@@ -1,0 +1,95 @@
+# B4 seq2seq CGM trajectory + hybrid C1 — knobs (locks in PLAN_B4.md)
+
+paths:
+  grid_5min: data/processed/features/grid_5min.parquet
+  grid_5min_person: data/processed/features/grid_5min_person.parquet
+  # optional shards (if grid_5min missing and index present)
+  grid_5min_index: data/processed/features/grid_5min_index.parquet
+  pool_masks: data/processed/meta/pool_masks.parquet
+  watch_green: data/processed/features/watch_green.parquet
+  onboarding: data/processed/features/onboarding.parquet
+  mood: data/processed/features/mood.parquet
+  path_a_blocks_config: training/path_a_blocks/config.yaml
+  artifacts: training/path_b/b4/artifacts
+
+# Wear channels fed to encoder (order fixed). CGM is target only — never in X.
+feature_cols:
+  - hr
+  - stress
+  - rr
+  - steps
+  - intensity
+  - asleep
+  - tod_sin
+  - tod_cos
+
+# Fill before observed-only z-score (missing wear → 0 after mask; steps/asleep natural 0)
+fill_zero:
+  - steps
+  - asleep
+
+data:
+  t_bins: 2016          # 7d @ 5 min
+  t_min: 1008           # drop if wear-valid bins in chosen window < this
+  expected_core_n: 1824
+  expected_aux_n: 1685
+  expected_c1_n_feat: 47
+  feat_std_floor: 1.0e-6
+  cgm_std_floor: 1.0e-6
+  # freeze anchors (informational / D1 parity)
+  frozen_c1_4auc: 0.7378
+  frozen_c1_bin: 0.8309
+  d1_drift_tol: 0.01
+
+model:
+  hidden: 64
+  patch_size: 12        # 1h patches at 5-min
+  patch_stride: 12
+  dropout: 0.2
+  n_classes: 4
+  # decoder: linear from upsampled patch states → per-bin cgm
+
+train:
+  seed: 42
+  batch_size: 8
+  max_epochs: 60
+  lr: 1.0e-3
+  weight_decay: 1.0e-4
+  grad_clip: 1.0
+  es_patience: 12
+  plateau_patience: 5
+  plateau_factor: 0.5
+  num_workers: 0
+
+lambdas: [0.0, 0.3, 1.0]
+
+# B4-B representation distillation (CGM-AE teacher → wear student)
+distill:
+  mus: [0.0, 0.3, 1.0]   # 0 = student CE-only control (no distill)
+  teacher_max_epochs: 60
+  teacher_es_patience: 12
+  teacher_lr: 1.0e-3
+
+bootstrap:
+  n: 2000
+  seed: 42
+
+# Stage-2 GBM for S*+C1 and D1 (Path A family via path_a_blocks / b2 protocol)
+stage2:
+  n_trials: 50
+  auc_tie_eps: 0.001
+  lgbm_device: auto
+
+calibration:
+  default_method: sigmoid
+  secondary_method: isotonic
+  min_pos_for_isotonic: 30
+
+quick:
+  max_participants: 64
+  max_epochs: 3
+  es_patience: 2
+  lambdas: [0.0, 1.0]
+  stage2_n_trials: 5
+  batch_size: 4
+  mus: [0.0, 1.0]

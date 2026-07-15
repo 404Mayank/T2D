@@ -18,23 +18,24 @@
      multiclass/binary (+ ordinal metrics); calibration diagnostic. **Status (2026-07-14):** Path A
      tabular **frozen** — watch floor 0.666; deployable C1 (watch+onboarding+mood) 0.738 / 0.831.
      See `training/path_a_blocks/REPORT_A_WRAP.md`.
-  2. **Path B headline candidate = B4** — seq2seq full-CGM-trajectory teacher → T2D head,
-     with **representation distillation under LUPI** as the novelty delta vs Diasense
-     logit-KD. Headline only if it beats direct; else rigorous-direct + negative-result framing.
+  2. **Path B headline cell = B4** — seq2seq traj + rep-distill under LUPI — **concluded null**
+     for deployable raise vs C1 (2026-07-15; easy + hard teachers). See `REPORT_B4*.md`.
+     Paper may still use rigorous-direct + negative-result framing for this cell.
   3. **B1 multi-task (scalar CGM summaries)** = controlled ablation only — **frozen 2026-07-15**.
      After sleep FE unit fix + input z-score: pure-seq test 4-AUC **0.652**; λ=0.5 multi-task
      **null** (paired boot CI lo≯0); GREEN late-fuse **no raise** (0.638). Pre-fix ~0.51 was
      broken inputs. Authority: `training/path_b/REPORT_B1.md`. Do not reopen B1 λ grids.
-  4. **B2 two-stage** = **next** ablation (point-estimate handoff vs shared/seq2seq representation).
+  4. **B2 two-stage** = ablation **frozen 2026-07-15** — no deployable arm beats C1; predicted handoff null; oracle +0.09 4-AUC non-deployable (`REPORT_B2.md`).
   5. **B3 logit-KD** = strong baseline to beat / reproduce **last** (Diasense method), not a contribution.
   6. **SSL / end-to-end 1-min** = gated later lever (makes raw sequence models learnable at
      this n); not cold-start CNN. **MOMENT** = one-afternoon side bet.
 - **Scientific claim:** **watch-only is the paper headline.** Onboarding/self-report is the
   "deployable config" in a deployment section, not the claim.
 - **Direct is built first regardless** — floor, reference for every aux Δ, bare-minimum model.
-- **Execution ladder (Path B):** **B1 (frozen) → B2 → B4 → B3 last.** Headline design is still B4;
-  run order prefers cheap two-stage (B2) before trajectory FE (B4). SSL/MOMENT only if watch-only
-  leaves dynamics on the table. Equal-depth "try everything" without kill gates is out of scope.
+- **Execution ladder (Path B):** **B1 (frozen) → B2 (frozen) → B4 (concluded) → B3 last.**
+  B2 predicted person-CGM handoff null + oracle headroom (`REPORT_B2.md`). B4 traj/rep-distill
+  null for deployable C1 raise (`REPORT_B4*.md`). SSL/MOMENT only if watch-only leaves dynamics
+  on the table.
 
 ## 1. Ground-truth data facts (verified on full cohort)
 
@@ -333,25 +334,23 @@ Aligned with `Training.md` §4–§7. Feature/engineering view:
 2. **Path A direct = floor + headline baseline** — **frozen (2026-07-14)**. Watch-only 0.666 is
    the aux / paper reference; deployable secondary is **C1 0.738 / 0.831** (not 1A alone).
    Ladder + wrap: `training/path_a_blocks/REPORT.md`, `REPORT_A_WRAP.md`. CORN optional; cal
-   diagnostic. **Next engineering: Path B**, not more survey blocks.
-3. **Controlled B1 ablation** (cheap). Same backbone ± scalar-CGM glucose head — settles whether
-   the teammate's multi-task failure was architecture or idea. Not the contribution.
-4. **B4 seq2seq full-CGM-trajectory teacher → T2D head** = **headline candidate**, paired with
-   **representation distillation under LUPI**. The one aux formulation Diasense didn't touch;
-   richer inductive bias than 8 scalar summaries or soft-logit KD. Needs CGM↔wearable alignment
-   (view b below). Headline only if it beats Path A.
-5. **B2 two-stage ablation** — proves joint/seq2seq representation beats point-estimate handoff.
-6. **SSL-pretrained backbone** (gated) — lever for raw 1-min end-to-end if hand features leave
+   diagnostic.
+3. **Controlled B1 ablation** — **done / frozen** (multi-task null; pure-seq ~0.652).
+4. **B2 two-stage ablation** — **done / frozen** (predicted null; oracle +0.09 non-deployable).
+5. **B4 traj + rep-distill** — **done / concluded null** for deployable C1 raise (A + B easy +
+   hard teachers). Grid FE + `training/path_b/b4/`. See `REPORT_B4*.md`.
+6. **B3 logit-KD baseline** — **next / last** (Diasense-style).
+7. **SSL-pretrained backbone** (gated) — lever for raw 1-min end-to-end if hand features leave
    dynamics on the table; not a cold-start CNN (hourly already failed locally at 4-AUC 0.6454).
    MOMENT embeddings → LGBM as a one-afternoon high-variance side bet.
-7. **Generative / TS augmentation + calibration polish** on the winning sequence/aux backbone if
+8. **Generative / TS augmentation + calibration polish** on the winning sequence/aux backbone if
    class-3 data hunger or miscalibration shows up.
-8. **SpO₂ validation + ODI** (optional side contribution). Methodological, not predictive headliner.
+9. **SpO₂ validation + ODI** (optional side contribution). Methodological, not predictive headliner.
 
 **Novelty note:** plain logit-KD (B3) is Diasense's territory — not a contribution as-is. Multi-task
-on scalar CGM (B1) is ablation-only. The delta must be a *different* formulation (B4 trajectory
-teacher, representation distillation, SSL+aux, attention fusion) or the deployment angle. The
-deployment motivation (no CGM at inference) is real and publishable.
+on scalar CGM (B1), two-stage point estimates (B2), and B4 traj/rep-distill are **controlled
+nulls** for deployable raise under recipes run. Residual delta may be SSL+aux, attention fusion,
+or the deployment angle. The deployment motivation (no CGM at inference) is real and publishable.
 
 ## 8. Build order
 
@@ -365,16 +364,15 @@ deployment motivation (no CGM at inference) is real and publishable.
      (`features/watch_daily.parquet`, `features/cgm_daily.parquet`; site-local day from UTC+zone).
      Sleep duration uses `.dt.total_seconds()`; `sleep_n_bouts` = sessions/onset day (fixed 2026-07-15).
      See `training/path_b/PLAN_B1_DATA.md` / `PLAN_B1_FIX.md`.
-   - **(b-grid, B4 later)** 5-min multi-modal CGM-window-aligned grid — **not built**; needs tighter
-     concurrent overlap + alignment policy.
+   - **(b-grid, B4)** 5-min multi-modal grid — **built 2026-07-15** (`features/grid_5min.parquet`,
+     6.88M × 1824; `grid_5min_person` quality). UTC bins + site-local ToD; concurrent aux median
+     ~210 h. Train-time subwindow = wear-density only (CGM-free). Package: `training/path_b/b4/`.
 3. **Path A baseline** — **frozen** (watch floor + 1A/1B/1C + wrap). Optional leftovers only:
    diet block, GREEN v2 FE, CORN, cal rewrite.
 4. **Survey EXTRAS** — hierarchy executed: 1A pass, 1B fail, 1C pass; diet skipped. Do not reopen
    1B as claim without a new pre-registered protocol.
-5. **Path B ladder (current main work):** **B1 frozen** → **B2 next** → **B4** (+ rep-distill headline)
-   → **B3 last**. Report downstream Δ vs Path A watch floor (and vs deployable C1). B1 pure-seq
-   floor ~0.652 (informational vs W0 0.666; not arch-matched). Optionally SSL / end-to-end / MOMENT
-   only behind the §7 gates.
+5. **Path B ladder:** **B1 frozen** → **B2 frozen** → **B4 concluded** → **B3 next**. B2: T1 0.735 ≯ C1;
+   O1 0.823 ceiling. B1 pure-seq ~0.652. B4: no deployable arm beats C1 (`REPORT_B4*.md`).
 
 ## 9. Compute & storage
 
@@ -441,8 +439,8 @@ summary:
 - ~~SpO₂ coverage on full~~ → 71.8% (1,638); stays Tier 3; does not gate primary pool.
 - ~~Sex/race availability~~ → not available; struck from onboarding.
 - ~~Stress scale~~ → 0–100; high thresholds ≥51 / ≥76.
-- ~~Headline architecture~~ → B4 + rep-distill under LUPI; B1 ablation **frozen** (null multi-task;
-  pure-seq 0.652); Path A first; run order **B1 → B2 → B4 → B3**.
+- ~~Headline architecture~~ → B4 + rep-distill under LUPI **ran and null for deployable raise**;
+  B1/B2 ablations **frozen**; Path A first; run order **B1 → B2 → B4 → B3** (B3 last remaining).
 - ~~condition_occurrence ICD leakage~~ → no ICDs; self-report dup of observation.
 - ~~`via*` blanket drop~~ → per-field: keep via1–3, drop clinical/retinal via*.
 
