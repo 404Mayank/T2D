@@ -63,12 +63,31 @@ train:
 
 lambdas: [0.0, 0.3, 1.0]
 
-# B4-B representation distillation (CGM-AE teacher → wear student)
+# B4-A-V2 multi-task balancer (none = plain λ; pcgrad | uncertainty)
+mtl:
+  balancer: none          # CLI --balancer overrides
+  uw_if_conflict_only: true
+
+# B4-B / B4-V2 representation distillation
 distill:
   mus: [0.0, 0.3, 1.0]   # 0 = student CE-only control (no distill)
+  objective: l2           # l2 | rkd | crd  (CLI --distill-objective)
+  proj_dim: 128
+  rkd_dist_ratio: 1.0
+  rkd_angle_ratio: 2.0
+  crd_temperature: 0.07
+  crd_bank_size: 1280
+  probe_auc_threshold: 0.55
+  traj_pearson_min: 0.15
+  aug_p: 0.5              # used when --aug
   teacher_max_epochs: 60
   teacher_es_patience: 12
   teacher_lr: 1.0e-3
+
+# Hybrid fusion (V2)
+fusion:
+  oof_folds: 5
+  f3_margin: 0.01         # F3 only if F1 > D1 - margin
 
 bootstrap:
   n: 2000

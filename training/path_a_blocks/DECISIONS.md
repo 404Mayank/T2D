@@ -147,3 +147,28 @@ Plan: `PLAN_SENS_C1.md`. Parent always original C1. Independent then joint.
 | all3 joint | 0.7472 | 0.8285 | +0.0094 | −0.005 | F | F | T | **F** | no (joint-only) |
 
 **Decision:** keep secondary = **C1 unchanged**. Smoking FE gap fixed (`smoking.parquet`) but no bar pass. Obesity flag BMI-redundant as expected. Vision mild/null. Joint closest (+0.009) still under +0.01 and CI overlaps 0.
+
+## Post-freeze CORN raise (2026-07-16) — null; C1 unchanged
+
+Package: `training/path_a_raise_corn/` (isolated; no writes into this package’s claim artifacts).  
+Plan/report: `PLAN_A_RAISE_CORN.md` / `REPORT.md` / package `DECISIONS.md`.
+
+| Arm | Test 4-AUC | Δ vs C1 | Note |
+|---|---:|---:|---|
+| CORN MLP `corn_full_20260715_211707` | **0.706** | **−0.031** (boot CI entirely &lt;0) | **bar FAIL** |
+| CE-MLP control | **0.713** | −0.025 | attribution |
+| C1 parent | **0.738** | 0 | frozen secondary |
+
+**Decision:** C1 / Path A freeze **unchanged**. Publishable null under locked protocol; optional unweighted/impute follow-ups only if a new go. Do not reframe frozen W0/C1 numbers.
+
+## Post-freeze ensemble raise (2026-07-16) — null; C1 unchanged
+
+Package: `training/path_a_raise_ensemble/` (isolated).  
+Report: `training/path_a_raise_ensemble/REPORT.md`.
+
+| Run | Best primary ΔAUC vs C1 | bar |
+|---|---:|---|
+| S=5 `ens_full_20260715_impl` | E_arith **+0.006** (CI includes 0) | **fail** |
+| S=10 `ens_s10_20260715_impl` | E_arith **+0.003** | **fail** |
+
+**Decision:** multi-seed bagging + cross-family blend/stack do **not** clear the +0.01 bar. C1 remains secondary. Frozen Path A numbers unchanged.

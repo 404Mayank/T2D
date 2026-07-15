@@ -1,0 +1,67 @@
+# Path A raise — multi-seed bagging + cross-family ensemble
+# See PLAN_A_RAISE_ENSEMBLE.md (post-critique revised)
+
+run:
+  seed: 42
+  seeds: [42, 43, 44, 45, 46]
+  n_jobs: -1
+  es_rounds: 80
+  n_estimators_max: 4000
+  lgbm_device: gpu          # must match C1 freeze (assert)
+  catboost_task_type: CPU
+  catboost_boosting_type: Ordered
+  catboost_boosting_fallback: Plain
+  bootstrap_n: 1000
+  bootstrap_ci: 0.95
+  bootstrap_seed: 42
+  paired_bootstrap_seed: 53  # 42+11, matches run_1c
+  min_n_boot_ok: 950
+  geom_eps: 1.0e-6
+  auc_tie_eps: 0.005
+
+paths:
+  watch_green: data/processed/features/watch_green.parquet
+  onboarding: data/processed/features/onboarding.parquet
+  mood: data/processed/features/mood.parquet
+  pool_masks: data/processed/meta/pool_masks.parquet
+  artifacts_root: training/path_a_raise_ensemble/artifacts
+  # read-only parent
+  parent_artifacts_root: training/path_a_blocks/artifacts
+  blocks_config: training/path_a_blocks/config.yaml
+
+parent_c1:
+  run_id: mood_scores_20260714_014415
+  test_macro_ovr_auc: 0.7377859791966677
+  test_binary_auc: 0.8308943089430895
+  test_macro_auprc: 0.4687470484302076
+  feature_hash: d63ec5713ada37bf
+  n_features: 47
+  feature_set: scores
+  family_selected: catboost
+  lgbm_device: gpu
+  catboost_best_iteration: 72
+  lgbm_best_iteration: 103
+
+data:
+  expected_n: 1824
+  id_col: person_id
+  # onboarding keep / mood scores resolved from blocks config at runtime
+  # (snapshot asserted against parent freeze feature_cols)
+
+class_weights:
+  lightgbm: balanced
+  catboost: Balanced
+
+stack:
+  k_folds: 5
+  C_grid: [0.01, 0.1, 1.0, 10.0]
+  oof_mode: bag_mean_es_on_fold
+  max_iter: 2000
+  degeneracy_l2_ratio_min: 0.05
+  collapse_val_margin: 0.005
+
+# Decision bar vs C1
+bar:
+  delta_auc: 0.01
+  primary_a: Bag_cat
+  primary_b: E_arith

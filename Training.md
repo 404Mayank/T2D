@@ -96,6 +96,10 @@ for variance/robustness reasons, not because of that citation.
 
 **Ordinal regression.** The 4-class label is ordered. Prefer CORN/CORAL (above) over classical
 proportional-odds, since proportional odds likely fails at the pre-diabetes / oral-med boundary.
+**Status (2026-07-16):** lean-CORN tabular MLP on exact C1 **ran / null vs C1** — package
+`training/path_a_raise_corn/` (test 4-AUC 0.706; CE control 0.713; bar fail; C1 unchanged).
+Post-freeze multi-seed bag + cross-family ensemble raise also **null** — package
+`training/path_a_raise_ensemble/` (S=5 best ΔAUC +0.006; S=10 +0.003; bar fail; C1 unchanged).
 
 **1D-CNN / LSTM on raw 1-min series (optional, later, high-risk).** Captures intra-day dynamics
 the tabular models can't, but has a **negative local prior**: hourly resolution (336 steps) was
@@ -113,11 +117,14 @@ a principled justification instead of ad-hoc "we regressed glucose then fed it,"
 non-KD formulations.
 
 **B1 — Multi-task joint (shared backbone + glucose head + T2D head).** *Ablation, not the
-headline — **frozen 2026-07-15**.* Controlled `attn_lstm_64` + day-level 8-vector glu head:
-post FE/scale fix, pure-seq test 4-AUC **0.652**; λ=0.5 multi-task **null** (paired boot CI lo≯0);
-GREEN late-fuse **no raise**. Pre-fix ~0.51 grid was broken sleep FE + unscaled inputs — not a
-ceiling. Teammate multi-task null directionally confirmed under controlled backbone. See
-`training/path_b/REPORT_B1.md`. Do **not** reopen B1 λ grids; ladder **B2 (frozen) → B4 (concluded) → B3 last**.
+headline — **frozen 2026-07-15** (plain-λ); **GS sibling frozen 2026-07-16**.* Controlled
+`attn_lstm_64` + day-level 8-vector glu head: post FE/scale fix, pure-seq test 4-AUC **0.652**;
+λ=0.5 multi-task **null** (paired boot CI lo≯0); GREEN late-fuse **no raise**. Gradient-balanced
+retry (PCGrad + uncertainty weighting, `b1gs_grid_20260716`) also **null** (best Δ +0.0006,
+CI lo≯0) despite moderate conflict (~20% steps); glu head stays sub-constant (val z-MSE~1.32).
+Pre-fix ~0.51 grid was broken sleep FE + unscaled inputs — not a ceiling. See
+`training/path_b/REPORT_B1.md` + `REPORT_B1_GS.md`. Do **not** reopen B1 λ/GS grids without a new
+`PLAN_*`; ladder **B2 (frozen) → B4 (concluded) → B3 (frozen)**; siblings B1-GS / B2-V2 frozen.
 
 Do **not** claim B1 > two-stage as established. Research confirms **no universal evidence that
 multi-task beats two-stage** — dataset/task-dependent; task-gradient conflict is real. Run B2
@@ -127,26 +134,36 @@ next and let the ablation decide against the frozen B1 floor.
 Person GREEN → 8 daymean CGM → C1/W0 Stage-2: predicted handoff **null** (T1 test 4-AUC **0.7345**
 vs matched D1/C1 **0.7378**; Δ CI lo≯0). **No deployable B2 arm beats C1** (best deployable = D1 ≡ C1).
 Oracle true-CGM O1 **0.823** vs matched D1a (**+0.094**) proves headroom but is privileged + aux-only;
-Stage-1 R²~0.05 is the bottleneck. See `training/path_b/REPORT_B2.md` §7 for residual knobs
-(explicitly **not** required). Do **not** reopen B2 claim HPO; B4 done — proceed to B3.
+Stage-1 R²~0.05 is the bottleneck. See `training/path_b/REPORT_B2.md`.
 
-**B4 — Seq2Seq CGM-trajectory + rep-distill (headline cell) — concluded 2026-07-15.**
+**B2-V2 — sibling retry (daily MSE mid + variance pack) — frozen 2026-07-16** (`b2v2_grid_20260716`).
+Daily watch→CGM reduced-Y emulator + mid/spread/daysd handoff: T1v **0.727** / T1p **0.730** still
+**≯** matched D1 **0.7378** (all Δ CI lo≯0); O1−D1a **+0.096**. Stage-1 val mean R² ~0.09 / test ~0.03.
+Adversarial post-hoc audit: null **authentic** (no blocker bug; T1v still uses ~18% yhat importance).
+See `training/path_b/REPORT_B2_V2.md`. Do **not** reopen B2/B2-V2 claim HPO without a new plan.
+Ladder complete with **B3 frozen**; siblings **B1-GS / B2-V2 / B4-V2** also frozen null. Further work only via new `PLAN_*` (e.g. SSL).
+
+**B4 — Seq2Seq CGM-trajectory + rep-distill (headline cell) — concluded 2026-07-15; V2 sibling null 2026-07-16.**
 5-min multi-modal grid FE + CNN patch encoder. **B4-A** traj multi-task: S0 test 4-AUC **0.646**;
 Sλ−S0 **null**; hybrid z∥C1 best **0.714** &lt; matched D1 **0.736** (≈ freeze C1). Wear→curve Pearson
 ~0.14–0.26 (non-degenerate recon, weak transfer). **B4-B** rep-distill (easy X∥cgm + hard
 cgm_only / wear→cgm teachers): student μ&gt;0 **null/hurts**; best hybrid **0.735** still ≯ D1.
-Easy-teacher loophole closed by hard-teacher sensitivity. **No deployable B4 arm beats C1.**
+Easy-teacher loophole closed by hard-teacher sensitivity. **B4-V2** (RKD/CRD + PCGrad + OOF fusion):
+PCGrad hurts/null (no grad conflict); RKD/CRD μ&gt;0 null/hurts; best hybrid F1 OOF **0.726** ≯ D1 **0.736**;
+H2 teacher Pearson **0.30** + probe GO. **No deployable B4/B4-V2 arm beats C1.**
 Privilege remains real (B2 oracle; teacher/CGM probes). Authority: `REPORT_B4.md`,
-`REPORT_B4_B.md`, `REPORT_B4_B_HARD.md`. Do **not** reopen B4 claim grids without a new `PLAN_*`.
+`REPORT_B4_B.md`, `REPORT_B4_B_HARD.md`, `REPORT_B4_V2.md`. Do **not** reopen without a new `PLAN_*`.
 
-**B3 — Knowledge distillation (CGM teacher → wearable student, soft logits).** *Strong baseline to
-beat, not a contribution — **next / last** on the ladder.* This is the teammate's method (T=2,
-α=0.3 best; recovers ~20% of the teacher's gap). Principled leakage handling via out-of-fold
-teacher predictions. Run as controlled Diasense-style baseline after B4 nulls.
+**B3 — Knowledge distillation (CGM teacher → wearable student, soft logits).** *Strong baseline,
+not a contribution — **frozen 2026-07-15**.* Diasense-style OOF soft logits (T=2, α=0.3 decision):
+`G_α=0.3` test 4-AUC **0.7469** vs matched D1/C1 **0.7378** (Δ **+0.009** CI lo≯0 → **null**);
+binary **worse** than C1; Hinton MLP `N_α=0.3`−N0 **null**; teacher Tch **0.823** vs D1a (+0.076).
+See `training/path_b/REPORT_B3.md`. Do **not** reopen B3 claim grids without a new `PLAN_*`.
 
-**Representation distillation under LUPI** was tested as B4-B (easy + hard teachers): cosine
-alignment rises with μ but 4-AUC does not; hybrid still ≤ C1. Residual novelty may still live in
-SSL+aux, attention fusion, or deployment framing — not “redo B4 λ/μ grids.”
+**Representation distillation under LUPI** was tested as B4-B (L2; easy + hard teachers) and
+**B4-V2** (RKD/CRD + PCGrad MTL + OOF fusion): alignment/mechanism can work (or teacher GO) but
+4-AUC does not raise; hybrids still ≤ C1/D1 (`REPORT_B4_V2.md`). Residual novelty may still live
+in **SSL+aux**, attention fusion, or deployment framing — not “redo B4 λ/μ or RKD/CRD grids.”
 
 ## 5. Additions to the menu (researched this session)
 
@@ -198,7 +215,12 @@ sequence/aux models — not a substitute for locking class weights before featur
   (0.699); 1B comorbidity bar-fail; 1C mood bar-pass (0.738 / binary 0.831, PAID-driven); wrap
   ablations keep **C1** as secondary (minimal retention fail; binary HPO no gain). Post-freeze
   C1 sensitivities (smoking / `mhoccur_obs` / `via1–3` / joint) **all bar-fail** — C1 unchanged.
-  Diet not run. See `training/path_a_blocks/REPORT_A_WRAP.md`.
+  Diet not run. Post-freeze **CORN MLP raise** (2026-07-16) on exact C1 matrix: **bar-fail null**
+  (test 4-AUC 0.706 vs C1 0.738, Δ−0.031, CI entirely &lt;0; CE control 0.713; CORN≈CE). Post-freeze
+  **ensemble raise** (2026-07-16) multi-seed bag + LGBM/CatBoost blend/stack: **bar-fail null**
+  (S=5 E_arith Δ+0.006; S=10 Δ+0.003; CIs include 0). C1 unchanged.
+  See `training/path_a_blocks/REPORT_A_WRAP.md` + `training/path_a_raise_corn/REPORT.md` +
+  `training/path_a_raise_ensemble/REPORT.md`.
 - Decide the class-imbalance strategy (weights / focal loss) **before** feature selection so
   importance isn't confounded by the loss.
 
@@ -216,18 +238,24 @@ sequence/aux models — not a substitute for locking class weights before featur
      complete in `training/path_a_blocks/`: 1A **0.699** bar-pass; 1B core bar-fail; 1C mood
      **0.738 / 0.831** bar-pass; wrap (minimal/PAID/severity/binary) → secondary pick **C1**;
      C1 sensitivities smoke/obs/via **null**. Authority: `REPORT_A_WRAP.md` + `DECISIONS.md`.
-     CORN neural ordinal still optional; cal remains diagnostic. **Path B / B1 frozen (2026-07-15):**
-     C1 sleep FE + C2 input z-score fixed; pure-seq test 4-AUC **0.652** (pre-fix 0.51 was broken inputs);
-     multi-task λ=0.5 **null** (Δ≈0, CI lo≯0); GREEN late-fuse **no raise** (0.638). Authority:
-     `training/path_b/REPORT_B1.md` + `REPORT_B2.md` + `REPORT_B4*.md` + `DECISIONS.md`.
-     **Next: B3 last.**
-2. **Controlled B1 ablation** — **done / frozen.** Same 64-hidden attention backbone, day-level glucose
-   head, summary-CGM target. Multi-task is a clean null after FE/scale repair; pure spine does not
-   beat Path A watch GBM (0.666). Not the headline.
+     **CORN neural ordinal raise done / null (2026-07-16)** — package `training/path_a_raise_corn/`;
+     CORN MLP 0.706 / CE-MLP 0.713 ≯ C1 0.738; primary bar fail justified (`REPORT.md`).
+     **Ensemble raise done / null (2026-07-16)** — package `training/path_a_raise_ensemble/`;
+     Bag_cat / E_arith / stack all bar-fail vs C1 (best S=5 Δ+0.006).
+     Cal remains diagnostic. **Path B / B1 frozen (2026-07-15
+     plain-λ; 2026-07-16 GS):** C1 sleep FE + C2 input z-score fixed; pure-seq test 4-AUC **0.652**
+     (pre-fix 0.51 was broken inputs); multi-task λ=0.5 **null** (Δ≈0, CI lo≯0); GREEN late-fuse
+     **no raise** (0.638); PCGrad/UW GS retry also **null** (`b1gs_grid_20260716`). Authority:
+     `training/path_b/REPORT_B1.md` + `REPORT_B1_GS.md` + `REPORT_B2.md` + `REPORT_B4*.md` +
+     `DECISIONS.md`. **Path B ladder complete (B1–B4+B3); no deployable raise vs C1.**
+2. **Controlled B1 ablation** — **done / frozen** (plain-λ + gradient-balanced). Same 64-hidden
+   attention backbone, day-level glucose head, summary-CGM target. Multi-task is a clean null after
+   FE/scale repair *and* after PCGrad/UW; pure spine does not beat Path A watch GBM (0.666). Not
+   the headline. See `REPORT_B1_GS.md`.
 3. **B2 (two-stage) ablation** — **done / frozen.** Predicted person-CGM handoff null; oracle headroom real.
 4. **B4 (seq2seq traj + rep-distill)** — **done / concluded null** for deployable raise (A + B easy +
    hard teachers). Grid FE + package `training/path_b/b4/`. See `REPORT_B4*.md`.
-5. **B3 logit-KD baseline** — **next / last** (Diasense-style; not a contribution as-is).
+5. **B3 logit-KD baseline** — **done / frozen** (Diasense-style; G_α=0.3 null vs C1; `REPORT_B3.md`).
 6. **SSL-pretrained backbone** (gated) as the lever to make the raw 1-min end-to-end model viable
    (instead of a cold-start CNN the hourly-failure prior says will underperform). MOMENT-embedding
    + GBM as a one-afternoon high-variance side bet.
@@ -244,8 +272,11 @@ sequence/aux models — not a substitute for locking class weights before featur
 
 ## 9. Open methodology questions
 
-- CORN vs CORAL: pick one ordinal loss; CORN drops proportional-odds (safer given suspected
-  boundary failure), CORAL assumes it. **Lean CORN.**
+- CORN vs CORAL: **lean-CORN primary run done / null vs C1** (`path_a_raise_corn/`, 2026-07-16).
+  CORAL sibling and unweighted-CORN ablation **not** required to close the raise; optional only.
+  Wording: null is “CORN MLP + median-impute + weighted recipe ≯ C1 GBM,” not “ordinality disproven.”
+- Multi-seed bagging + cross-family ensemble vs C1: **done / null** (`path_a_raise_ensemble/`,
+  2026-07-16; S=5 + mandatory S=10). Do not re-open without a new `PLAN_*`.
 - Task-weighting scheme for B1/B4: uncertainty weighting vs GradNorm — small sweep.
 - Whether to train the T2D head on all wearable-eligible participants while the glucose head
   trains on the effective aux subset with a shared backbone (avoid silently restricting T2D to

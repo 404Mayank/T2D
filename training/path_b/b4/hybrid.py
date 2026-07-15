@@ -8,6 +8,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+import torch
 import yaml
 
 from training.path_a_blocks.data_blocks import load_watch_onboarding_mood
@@ -161,10 +162,29 @@ def run_d1(
     test_auc = float(result["metrics"]["test_raw"]["macro_ovr_auc"])
     result["freeze_c1_4auc"] = freeze
     result["d1_vs_freeze_delta"] = test_auc - freeze
-    # freeze parity only meaningful on full core re-fit
-    full_core = pid_allow is None and len(pids) == int(b4_cfg["data"]["expected_core_n"])
-    result["d1_matches_freeze"] = bool(full_core and abs(test_auc - freeze) <= tol)
+    # Freeze parity: meaningful when re-fit covers (near) full core.
+    # pid_allow is often set to sequence survivors even on full claim — treat as
+    # full-core-eligible when n ≈ expected_core_n (≤ T_min drops).
+    expected_n = int(b4_cfg["data"]["expected_core_n"])
+    n_persons = int(len(pids))
+    full_core_like = n_persons >= expected_n - 5  # allow few T_min drops
+    # Unrestricted path (pid_allow is None) is always a freeze check candidate
+    freeze_check_eligible = pid_allow is None or full_core_like
+    result["d1_matches_freeze"] = bool(
+        freeze_check_eligible and abs(test_auc - freeze) <= tol
+    )
     result["pid_allow_restricted"] = pid_allow is not None
+    result["freeze_check_eligible"] = freeze_check_eligible
+    result["fair_bar_note"] = (
+        None
+        if result["d1_matches_freeze"]
+        else (
+            f"D1 test 4-AUC {test_auc:.4f} vs freeze {freeze:.4f} "
+            f"(Δ={test_auc - freeze:+.4f}); fair bar = re-fit D1 only"
+            if freeze_check_eligible
+            else f"restricted pool n={n_persons} (smoke/subsample); fair bar = re-fit D1 only"
+        )
+    )
     with open(out_dir / "d1_metrics.json", "w") as f:
         json.dump(
             {
@@ -174,16 +194,21 @@ def run_d1(
                 "test_cal": result["metrics"]["test_cal"],
                 "d1_vs_freeze_delta": result["d1_vs_freeze_delta"],
                 "d1_matches_freeze": result["d1_matches_freeze"],
+                "freeze_check_eligible": freeze_check_eligible,
+                "fair_bar_note": result["fair_bar_note"],
                 "n_feat": len(c1_cols),
                 "feature_cols": list(c1_cols),
-                "n_persons": int(len(pids)),
+                "n_persons": n_persons,
                 "pid_allow_restricted": pid_allow is not None,
-                "full_core_freeze_check": full_core,
+                "full_core_like": full_core_like,
+                "expected_core_n": expected_n,
             },
             f,
             indent=2,
             default=float,
         )
+    if result["fair_bar_note"]:
+        log(f"  D1 fair-bar note: {result['fair_bar_note']}")
     np.savez_compressed(
         out_dir / "d1_test_preds.npz",
         y=result["y_test"],
@@ -277,22 +302,10 @@ def pair_boot_from_preds(
     return paired_bootstrap_delta_auc(y, pa, pb, n_boot=n_boot, seed=seed)
 
 
-def hybrid_from_bundle_embeddings(
-    repo: Path,
-    b4_cfg: dict[str, Any],
-    bundle: GridBundle,
-    emb_path: Path,
-    arm_name: str,
-    out_dir: Path,
-    *,
-    n_trials: int | None = None,
-    log=print,
-) -> dict[str, Any]:
-    """Load embeddings.npz (bundle order) and run z∥C1 GBM."""
-    # allow_pickle only if needed for legacy object `split`; z/y/pid are numeric.
+def _load_emb(emb_path: Path, bundle: GridBundle) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Load embeddings.npz aligned to bundle order → z, pids, y, split."""
     try:
         emb = np.load(emb_path, allow_pickle=False)
-        _ = emb["z"]
         split_from_emb = None
         if "split" in emb.files:
             try:
@@ -311,7 +324,6 @@ def hybrid_from_bundle_embeddings(
     pids = emb["pid"]
     y = emb["y"]
     split = split_from_emb if split_from_emb is not None else bundle.split
-    # align: embeddings saved in bundle order
     if not np.array_equal(pids, bundle.pids):
         order = {int(p): i for i, p in enumerate(pids)}
         idx = [order[int(p)] for p in bundle.pids]
@@ -322,6 +334,22 @@ def hybrid_from_bundle_embeddings(
     elif len(y) != len(bundle.pids):
         y = bundle.y
         split = bundle.split
+    return z, pids, y, np.asarray(split)
+
+
+def hybrid_from_bundle_embeddings(
+    repo: Path,
+    b4_cfg: dict[str, Any],
+    bundle: GridBundle,
+    emb_path: Path,
+    arm_name: str,
+    out_dir: Path,
+    *,
+    n_trials: int | None = None,
+    log=print,
+) -> dict[str, Any]:
+    """Load embeddings.npz (bundle order) and run z∥C1 GBM (F2 frozen-z recipe)."""
+    z, pids, y, split = _load_emb(emb_path, bundle)
     return run_z_c1_arm(
         repo,
         b4_cfg,
@@ -333,4 +361,262 @@ def hybrid_from_bundle_embeddings(
         out_dir=out_dir,
         n_trials=n_trials,
         log=log,
+    )
+
+
+def run_z_only_arm(
+    repo: Path,
+    b4_cfg: dict[str, Any],
+    *,
+    z: np.ndarray,
+    pids: np.ndarray,
+    y: np.ndarray,
+    split: np.ndarray,
+    arm_name: str,
+    out_dir: Path,
+    n_trials: int | None = None,
+    log=print,
+) -> dict[str, Any]:
+    """F0b: GBM on z only (no C1) — orthogonal-signal probe."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    z_cols = [f"z_{i}" for i in range(z.shape[1])]
+    splits = _make_splits(z.astype(np.float32), y, split, pids, z_cols)
+    pa_run = _path_a_run_cfg(repo, b4_cfg)
+    if n_trials is not None:
+        pa_run["run"]["n_trials"] = int(n_trials)
+    log(f"=== z-only arm {arm_name} n_feat={z.shape[1]} ===")
+    result = train_stage2(splits, pa_run, n_trials=n_trials, log=log)
+    result["arm"] = arm_name
+    result["pid_test"] = splits["pid_test"]
+    result["y_test"] = splits["y_test"]
+    with open(out_dir / f"{arm_name}_metrics.json", "w") as f:
+        json.dump(
+            {
+                "arm": arm_name,
+                "family": result["family"],
+                "val_macro_ovr_auc": result["val_macro_ovr_auc"],
+                "test_raw": result["metrics"]["test_raw"],
+                "test_cal": result["metrics"]["test_cal"],
+                "n_feat": int(z.shape[1]),
+                "feature_cols": z_cols,
+            },
+            f,
+            indent=2,
+            default=float,
+        )
+    np.savez_compressed(
+        out_dir / f"{arm_name}_test_preds.npz",
+        y=result["y_test"],
+        proba=result["proba_test"],
+        pid=result["pid_test"],
+    )
+    return result
+
+
+def z_only_from_embeddings(
+    repo: Path,
+    b4_cfg: dict[str, Any],
+    bundle: GridBundle,
+    emb_path: Path,
+    arm_name: str,
+    out_dir: Path,
+    *,
+    n_trials: int | None = None,
+    log=print,
+) -> dict[str, Any]:
+    z, pids, y, split = _load_emb(emb_path, bundle)
+    return run_z_only_arm(
+        repo,
+        b4_cfg,
+        z=z,
+        pids=pids,
+        y=y,
+        split=split,
+        arm_name=arm_name,
+        out_dir=out_dir,
+        n_trials=n_trials,
+        log=log,
+    )
+
+
+def build_oof_embeddings(
+    bundle: GridBundle,
+    cfg: dict[str, Any],
+    *,
+    device: torch.device,
+    out_path: Path,
+    n_folds: int = 5,
+    quick: bool = False,
+    balancer: str = "none",
+    lam: float = 0.0,
+    log=print,
+) -> Path:
+    """K-fold OOF z on train; val/test z from full-train student (PLAN_B4_V2 F1).
+
+    **Claim scope (V2 v1-impl):** class-only encoder (lam=0) OOF.
+    This answers "does OOF-z reduce frozen-z dilution vs F2?" for the **μ=0 / CE**
+    student — NOT the RKD-μ fusion ambition. Label artifacts accordingly.
+    Per-fold RKD student OOF is a separate extension (not this function).
+    """
+    from sklearn.model_selection import StratifiedKFold
+
+    from training.path_b.b4.train import train_one_lambda
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    n = len(bundle.pids)
+    z_oof = np.zeros((n, int(cfg["model"]["hidden"])), dtype=np.float32)
+    filled = np.zeros(n, dtype=bool)
+
+    train_idx = np.where(bundle.split == "train")[0]
+    y_train = bundle.y[train_idx]
+    # stratified folds on train labels (cap folds by rarest class count)
+    from collections import Counter
+
+    min_class = min(Counter(y_train.tolist()).values()) if len(y_train) else 1
+    n_splits = max(2, min(n_folds, len(train_idx), min_class))
+    skf = StratifiedKFold(
+        n_splits=n_splits,
+        shuffle=True,
+        random_state=int(cfg["train"]["seed"]),
+    )
+    fold_root = out_path.parent / f"{out_path.stem}_folds"
+    fold_root.mkdir(parents=True, exist_ok=True)
+
+    for fold, (tr_rel, va_rel) in enumerate(skf.split(train_idx, y_train)):
+        tr_abs = train_idx[tr_rel]
+        va_abs = train_idx[va_rel]
+        log(f"  OOF fold {fold}: train_n={len(tr_abs)} oof_n={len(va_abs)}")
+        # subset bundle for fold train by remapping split: keep only tr_abs as train;
+        # use a tiny val from fold for ES (va_abs as val) — val labels used only for ES,
+        # OOF z for va_abs taken from this fold model (held out of train).
+        fold_bundle = _subset_bundle_for_oof(bundle, tr_abs, va_abs)
+        fdir = fold_root / f"fold{fold}"
+        met = train_one_lambda(
+            fold_bundle,
+            cfg,
+            lam=float(lam),
+            out_dir=fdir,
+            device=device,
+            quick=quick,
+            balancer=balancer,  # type: ignore[arg-type]
+        )
+        # map embeddings back: fold_bundle.pids order
+        emb = np.load(fdir / "embeddings.npz")
+        z_f = emb["z"]
+        pids_f = emb["pid"]
+        # OOF rows = va_abs persons
+        pid_to_zf = {int(p): z_f[i] for i, p in enumerate(pids_f)}
+        for j in va_abs:
+            pid = int(bundle.pids[j])
+            if pid in pid_to_zf:
+                z_oof[j] = pid_to_zf[pid]
+                filled[j] = True
+
+    # full-train student for val/test z
+    log("  OOF full-train student for val/test z")
+    full_dir = fold_root / "full_train"
+    train_one_lambda(
+        bundle,
+        cfg,
+        lam=float(lam),
+        out_dir=full_dir,
+        device=device,
+        quick=quick,
+        balancer=balancer,  # type: ignore[arg-type]
+    )
+    emb_full = np.load(full_dir / "embeddings.npz")
+    z_full = emb_full["z"]
+    # assume bundle order
+    if not np.array_equal(emb_full["pid"], bundle.pids):
+        order = {int(p): i for i, p in enumerate(emb_full["pid"])}
+        z_full = z_full[[order[int(p)] for p in bundle.pids]]
+    for j in range(n):
+        if bundle.split[j] in ("val", "test"):
+            z_oof[j] = z_full[j]
+            filled[j] = True
+        elif not filled[j]:
+            # train pid missing from folds (shouldn't) — fall back full-train
+            z_oof[j] = z_full[j]
+            filled[j] = True
+
+    meta = {
+        "oof_scope": "class_only_lam0",
+        "claim_note": (
+            "F1 OOF is μ=0/CE encoder only — not RKD-μ distill OOF. "
+            "Ambition bar on distill fusion remains F2 (frozen z∥C1) until "
+            "per-fold RKD OOF is implemented."
+        ),
+        "n_folds": int(n_splits),
+        "lam": float(lam),
+        "balancer": balancer,
+    }
+    np.savez_compressed(
+        out_path,
+        z=z_oof,
+        y=bundle.y,
+        pid=bundle.pids,
+        split=np.asarray(bundle.split, dtype="U16"),
+        filled=filled,
+        n_folds=n_splits,
+        oof_scope=np.asarray(["class_only_lam0"]),
+    )
+    with open(out_path.with_suffix(".meta.json"), "w") as f:
+        json.dump(meta, f, indent=2)
+    log(f"  wrote OOF embeddings → {out_path} (scope=class_only_lam0)")
+    return out_path
+
+
+def _subset_bundle_for_oof(
+    bundle: GridBundle,
+    train_abs: np.ndarray,
+    val_abs: np.ndarray,
+) -> GridBundle:
+    """Build a GridBundle whose train/val are the fold indices; drop test (empty OK).
+
+    Uses same tensors; remaps split labels. Persons outside train∪val get split='drop'
+    and are excluded from Dataset via split filter — we only keep train∪val rows.
+    """
+    keep = np.concatenate([train_abs, val_abs])
+    # preserve order: all train then val
+    keep = np.unique(keep)
+    # rebuild split array for kept rows
+    train_set = set(int(i) for i in train_abs)
+    val_set = set(int(i) for i in val_abs)
+
+    def take(arr):
+        return arr[keep]
+
+    new_split = np.array(
+        ["train" if int(i) in train_set else "val" for i in keep], dtype=object
+    )
+    # if overlap (shouldn't), prefer train
+    for k, i in enumerate(keep):
+        if int(i) in train_set:
+            new_split[k] = "train"
+        elif int(i) in val_set:
+            new_split[k] = "val"
+
+    return GridBundle(
+        pids=take(bundle.pids),
+        y=take(bundle.y),
+        split=new_split,
+        aux_eligible=take(bundle.aux_eligible),
+        X=take(bundle.X),
+        pad_mask=take(bundle.pad_mask),
+        wear_mask=take(bundle.wear_mask),
+        cgm=take(bundle.cgm),
+        traj_mask=take(bundle.traj_mask),
+        feature_cols=bundle.feature_cols,
+        feat_mean=bundle.feat_mean,
+        feat_std=bundle.feat_std,
+        cgm_mean=bundle.cgm_mean,
+        cgm_std=bundle.cgm_std,
+        class_weights=bundle.class_weights,
+        wear_valid_in_window=take(bundle.wear_valid_in_window),
+        pad_frac=take(bundle.pad_frac),
+        sub_start_idx=take(bundle.sub_start_idx),
+        c1=take(bundle.c1) if bundle.c1 is not None else None,
+        c1_cols=bundle.c1_cols,
+        w0_cols=bundle.w0_cols,
+        dropped_pids=list(bundle.dropped_pids or []),
     )

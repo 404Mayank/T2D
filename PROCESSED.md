@@ -228,7 +228,8 @@ Detail / locks: `training/path_b/PLAN_B1_DATA.md`, `training/path_b/DECISIONS.md
   masks `hr_bin_valid` / `cgm_bin_valid` / `wear_bin_valid`. Subwindow selection (wear-density,
   CGM-free) is **train-time** in `training/path_b/b4/data.py`, not stored in FE.
   **Full core built 2026-07-15:** 6.88M bins × 1824 pids; aux median concurrent
-  ~210 h. B4 training concluded (no deployable raise vs C1). See `PLAN_B4.md` / `REPORT_B4*.md`.
+  ~210 h. B4 + B4-V2 training concluded (no deployable raise vs C1). See `PLAN_B4.md` /
+  `REPORT_B4*.md` / `REPORT_B4_V2.md`.
 
 ---
 

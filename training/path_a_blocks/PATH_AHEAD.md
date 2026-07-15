@@ -90,8 +90,10 @@ From `onboarding.parquet` (available now):
 - 1C mood → **bar pass** (PAID)  
 - Phase A wrap → minimal/PAID/severity/binary done; **Path A frozen** (`REPORT_A_WRAP.md`)  
 - C1 sensitivities (smoking / obs / via) → **all bar-fail**; C1 unchanged (`PLAN_SENS_C1.md`)  
-- 1D diet / GREEN v2 / CORN: optional, not required to leave Path A  
-- **Next package work: Path B**
+- Post-freeze **CORN MLP raise** → **bar-fail null** (0.706 ≯ C1 0.738); package `training/path_a_raise_corn/` (`REPORT.md`)  
+- Post-freeze **ensemble raise** → **bar-fail null** (S=5 best Δ+0.006; S=10 +0.003); package `training/path_a_raise_ensemble/` (`REPORT.md`)  
+- 1D diet / GREEN v2: still optional leftovers only  
+- **Next package work: Path B** (ladder since completed; residual optional SSL etc.)
 
 ## 4. Milestones
 
@@ -134,4 +136,6 @@ Decisions log: `DECISIONS.md` in this directory.
 | 2026-07-14 | Phase A wrap plan revised post-critique: `PLAN_A_WRAP.md` |
 | 2026-07-14 | **Wrap complete** (`run_wrap --all`); minimal retention fail → secondary = **C1**; Path A frozen |
 | 2026-07-14 | C1 sensitivities smoke/obs/via/all3 — **all bar-fail**; C1 unchanged (`PLAN_SENS_C1.md`) |
-| next | **Path B** (privileged CGM / distillation). See `REPORT_A_WRAP.md` |
+| 2026-07-16 | Post-freeze CORN/CE MLP raise **null** (`path_a_raise_corn/`; bar fail; C1 unchanged) |
+| 2026-07-16 | Post-freeze ensemble raise **null** (`path_a_raise_ensemble/`; S=5+S=10 bar fail; C1 unchanged) |
+| next | Residual optional only (SSL, diet, cal/op-point). Path B ladder already complete. See `REPORT_A_WRAP.md` |

@@ -78,6 +78,9 @@ train:
   plateau_patience: 5
   plateau_factor: 0.5
   num_workers: 0
+  # B1-GS uncertainty weighting (PLAN_B1_GS §4.4)
+  uw_lr_scale: 0.1   # lr_s = scale * lr for s_ce / s_glu
+  uw_clamp: 5.0
 
 lambdas: [0.0, 0.3, 0.5, 1.0]
 

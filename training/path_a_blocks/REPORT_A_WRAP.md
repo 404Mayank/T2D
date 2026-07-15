@@ -196,3 +196,35 @@ Plan: `PLAN_A_WRAP.md`, `PLAN_A_WRAP_IMPL.md`, `PLAN_SENS_C1.md`. Decisions: `DE
 ## 10. Handoff → Path B
 
 Path A tabular is done (wrap + C1 sensitivities null). Next work is **Path B** (privileged CGM / teacher–student / distillation), not more survey blocks or diet in this package. Do not move the W0 headline or re-open 1B / smoke / obs / via as claim without a new pre-registered protocol.
+
+---
+
+## 11. Post-freeze CORN ordinal raise (2026-07-16) — null; C1 unchanged
+
+Isolated package `training/path_a_raise_corn/` (does **not** rewrite this freeze table).
+
+| Arm | Run | Test 4-AUC | Binary | Class-2 | ΔAUC vs C1 | Bar |
+|---|---|---:|---:|---:|---:|---|
+| CORN MLP | `corn_full_20260715_211707` | **0.706** | 0.763 | 0.631 | **−0.031** (CI entirely &lt;0) | **FAIL** |
+| CE-MLP control | `ce_mlp_full_20260715_211707` | **0.713** | 0.770 | 0.653 | −0.025 | n/a |
+| **C1 (parent)** | frozen | **0.738** | **0.831** | **0.638** | 0 | — |
+
+CORN−CE Δ ≈ 0. Soft class-2 win no. Null audit: primary bar **JUSTIFIED**.  
+Authority: `training/path_a_raise_corn/REPORT.md` + `DECISIONS.md`. Secondary deployable remains **C1**.
+
+---
+
+## 12. Post-freeze ensemble raise (2026-07-16) — null; C1 unchanged
+
+Isolated package `training/path_a_raise_ensemble/` (does **not** rewrite this freeze table).
+Multi-seed bagging + cross-family arith/geom/stack on exact C1 matrix; dual primary A=`Bag_cat`, B=`E_arith`.
+
+| Run | Best primary | Test 4-AUC | ΔAUC vs C1 | Bar |
+|---|---|---:|---:|---|
+| S=5 `ens_full_20260715_impl` | E_arith | **0.744** | **+0.006** (CI includes 0) | **FAIL** |
+| S=10 `ens_s10_20260715_impl` | E_arith | **0.741** | **+0.003** | **FAIL** |
+| Bag_cat S=5 | primary A | 0.739 | +0.001 | **FAIL** |
+| **C1 (parent)** | frozen | **0.738** | 0 | — |
+
+Seed bag ≈ single-seed C1; blend point lift inside noise; stack no raise.  
+Authority: `training/path_a_raise_ensemble/REPORT.md` + `DECISIONS.md`. Secondary deployable remains **C1**.

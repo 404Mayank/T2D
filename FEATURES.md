@@ -17,25 +17,31 @@
      summary features; fixed `recommended_split` (+ person-bootstrap CIs for block Δ);
      multiclass/binary (+ ordinal metrics); calibration diagnostic. **Status (2026-07-14):** Path A
      tabular **frozen** — watch floor 0.666; deployable C1 (watch+onboarding+mood) 0.738 / 0.831.
-     See `training/path_a_blocks/REPORT_A_WRAP.md`.
+     Post-freeze CORN MLP raise **null** (2026-07-16; 0.706 ≯ C1). Post-freeze ensemble raise
+     **null** (2026-07-16; best Δ+0.006). See `REPORT_A_WRAP.md` +
+     `training/path_a_raise_corn/REPORT.md` + `training/path_a_raise_ensemble/REPORT.md`.
   2. **Path B headline cell = B4** — seq2seq traj + rep-distill under LUPI — **concluded null**
      for deployable raise vs C1 (2026-07-15; easy + hard teachers). See `REPORT_B4*.md`.
      Paper may still use rigorous-direct + negative-result framing for this cell.
-  3. **B1 multi-task (scalar CGM summaries)** = controlled ablation only — **frozen 2026-07-15**.
-     After sleep FE unit fix + input z-score: pure-seq test 4-AUC **0.652**; λ=0.5 multi-task
-     **null** (paired boot CI lo≯0); GREEN late-fuse **no raise** (0.638). Pre-fix ~0.51 was
-     broken inputs. Authority: `training/path_b/REPORT_B1.md`. Do not reopen B1 λ grids.
+  3. **B1 multi-task (scalar CGM summaries)** = controlled ablation only — **frozen 2026-07-15**
+     (plain-λ); **GS sibling frozen 2026-07-16**. After sleep FE unit fix + input z-score:
+     pure-seq test 4-AUC **0.652**; λ=0.5 multi-task **null** (paired boot CI lo≯0); GREEN
+     late-fuse **no raise** (0.638). PCGrad + uncertainty weighting also **null** (best Δ
+     +0.0006, CI lo≯0) despite moderate conflict (~20% steps); glu head sub-constant.
+     Pre-fix ~0.51 was broken inputs. Authority: `REPORT_B1.md` + `REPORT_B1_GS.md`.
+     Do not reopen B1 λ/GS grids without a new `PLAN_*`.
   4. **B2 two-stage** = ablation **frozen 2026-07-15** — no deployable arm beats C1; predicted handoff null; oracle +0.09 4-AUC non-deployable (`REPORT_B2.md`).
-  5. **B3 logit-KD** = strong baseline to beat / reproduce **last** (Diasense method), not a contribution.
+  4b. **B2-V2** = sibling **frozen 2026-07-16** — daily MSE mid + variance pack still null vs C1
+     (T1v 0.727); oracle +0.096; Stage-1 val R²~0.09 / test~0.03 (`REPORT_B2_V2.md`).
+  5. **B3 logit-KD** = Diasense-style baseline **frozen 2026-07-15** — deployable null vs C1 (`REPORT_B3.md`), not a contribution.
   6. **SSL / end-to-end 1-min** = gated later lever (makes raw sequence models learnable at
      this n); not cold-start CNN. **MOMENT** = one-afternoon side bet.
 - **Scientific claim:** **watch-only is the paper headline.** Onboarding/self-report is the
   "deployable config" in a deployment section, not the claim.
 - **Direct is built first regardless** — floor, reference for every aux Δ, bare-minimum model.
-- **Execution ladder (Path B):** **B1 (frozen) → B2 (frozen) → B4 (concluded) → B3 last.**
-  B2 predicted person-CGM handoff null + oracle headroom (`REPORT_B2.md`). B4 traj/rep-distill
-  null for deployable C1 raise (`REPORT_B4*.md`). SSL/MOMENT only if watch-only leaves dynamics
-  on the table.
+- **Execution ladder (Path B):** **B1 → B2 → B4 → B3** all **frozen/concluded**; siblings B1-GS / B2-V2 frozen.
+  B2/B2-V2: predicted CGM handoff null + oracle headroom. B4 traj/rep-distill null for deployable
+  C1 raise. SSL/MOMENT only if watch-only leaves dynamics on the table (new `PLAN_*`).
 
 ## 1. Ground-truth data facts (verified on full cohort)
 
@@ -307,6 +313,7 @@ Canonical training methodology lives in **`Training.md`**. Feature-facing rules 
 
   Report ΔAUC + ΔAUPRC per block with bootstrap CIs. **Path A tabular frozen** → secondary
   deployable = watch+onboarding+mood (C1). Wrap + sensitivities: `REPORT_A_WRAP.md`.
+  Post-freeze CORN + ensemble raises **both null** (`path_a_raise_corn/`, `path_a_raise_ensemble/`).
 - **SHAP guardrail:** after the final fit, if top-10 SHAP are all survey items → "from wearables"
   claim dead; revisit watch engineering or framing. Report SHAP alongside permutation importance.
 - **Evaluation variants (all required):** 4-class macro-OVR AUC + AUPRC; binary healthy-vs-not;
@@ -333,13 +340,17 @@ Aligned with `Training.md` §4–§7. Feature/engineering view:
    onboarding/comorbidity/mood blocks). Re-clean only if policy changes.
 2. **Path A direct = floor + headline baseline** — **frozen (2026-07-14)**. Watch-only 0.666 is
    the aux / paper reference; deployable secondary is **C1 0.738 / 0.831** (not 1A alone).
-   Ladder + wrap: `training/path_a_blocks/REPORT.md`, `REPORT_A_WRAP.md`. CORN optional; cal
-   diagnostic.
-3. **Controlled B1 ablation** — **done / frozen** (multi-task null; pure-seq ~0.652).
+   Ladder + wrap: `training/path_a_blocks/REPORT.md`, `REPORT_A_WRAP.md`. **CORN MLP raise
+   concluded null (2026-07-16)** — `training/path_a_raise_corn/REPORT.md` (0.706 ≯ C1 0.738).
+   **Ensemble raise concluded null (2026-07-16)** — `training/path_a_raise_ensemble/REPORT.md`
+   (S=5 best Δ+0.006 ≯ +0.01 bar); cal diagnostic.
+3. **Controlled B1 ablation** — **done / frozen** (plain-λ + GS null; pure-seq ~0.652;
+   `REPORT_B1.md` + `REPORT_B1_GS.md`).
 4. **B2 two-stage ablation** — **done / frozen** (predicted null; oracle +0.09 non-deployable).
+4b. **B2-V2 daily + variance packing** — **done / frozen** (still null; residual knobs closed).
 5. **B4 traj + rep-distill** — **done / concluded null** for deployable C1 raise (A + B easy +
    hard teachers). Grid FE + `training/path_b/b4/`. See `REPORT_B4*.md`.
-6. **B3 logit-KD baseline** — **next / last** (Diasense-style).
+6. **B3 logit-KD baseline** — **done / frozen** (Diasense-style; null vs C1; `REPORT_B3.md`).
 7. **SSL-pretrained backbone** (gated) — lever for raw 1-min end-to-end if hand features leave
    dynamics on the table; not a cold-start CNN (hourly already failed locally at 4-AUC 0.6454).
    MOMENT embeddings → LGBM as a one-afternoon high-variance side bet.
@@ -348,9 +359,10 @@ Aligned with `Training.md` §4–§7. Feature/engineering view:
 9. **SpO₂ validation + ODI** (optional side contribution). Methodological, not predictive headliner.
 
 **Novelty note:** plain logit-KD (B3) is Diasense's territory — not a contribution as-is. Multi-task
-on scalar CGM (B1), two-stage point estimates (B2), and B4 traj/rep-distill are **controlled
-nulls** for deployable raise under recipes run. Residual delta may be SSL+aux, attention fusion,
-or the deployment angle. The deployment motivation (no CGM at inference) is real and publishable.
+on scalar CGM (B1/GS), two-stage point + daily/variance handoffs (B2/B2-V2), and B4 traj/rep-distill
+are **controlled nulls** for deployable raise under recipes run. Residual delta may be SSL+aux,
+attention fusion, or the deployment angle. The deployment motivation (no CGM at inference) is real
+and publishable.
 
 ## 8. Build order
 
@@ -367,12 +379,16 @@ or the deployment angle. The deployment motivation (no CGM at inference) is real
    - **(b-grid, B4)** 5-min multi-modal grid — **built 2026-07-15** (`features/grid_5min.parquet`,
      6.88M × 1824; `grid_5min_person` quality). UTC bins + site-local ToD; concurrent aux median
      ~210 h. Train-time subwindow = wear-density only (CGM-free). Package: `training/path_b/b4/`.
-3. **Path A baseline** — **frozen** (watch floor + 1A/1B/1C + wrap). Optional leftovers only:
-   diet block, GREEN v2 FE, CORN, cal rewrite.
+3. **Path A baseline** — **frozen** (watch floor + 1A/1B/1C + wrap). Post-freeze CORN MLP raise
+   **done / null** (`path_a_raise_corn/`). Post-freeze ensemble raise **done / null**
+   (`path_a_raise_ensemble/`). Optional leftovers only: diet block, GREEN v2 FE,
+   cal rewrite / screening operating point.
 4. **Survey EXTRAS** — hierarchy executed: 1A pass, 1B fail, 1C pass; diet skipped. Do not reopen
    1B as claim without a new pre-registered protocol.
-5. **Path B ladder:** **B1 frozen** → **B2 frozen** → **B4 concluded** → **B3 next**. B2: T1 0.735 ≯ C1;
-   O1 0.823 ceiling. B1 pure-seq ~0.652. B4: no deployable arm beats C1 (`REPORT_B4*.md`).
+5. **Path B ladder:** **B1 frozen** (plain-λ + GS) → **B2 frozen** → **B2-V2 frozen** → **B4
+   concluded** → **B3 frozen**. B2: T1 0.735 ≯ C1; O1 0.823. B2-V2: T1v 0.727 ≯ C1; O1 +0.096
+   (`REPORT_B2_V2.md`). B1 pure-seq ~0.652; GS null (`REPORT_B1_GS.md`). B4/B3: no deployable
+   raise (`REPORT_B4*.md`, `REPORT_B3.md`).
 
 ## 9. Compute & storage
 
@@ -431,8 +447,9 @@ summary:
 6. `mssrffl`/`msslffl` foot monofilament: include or exclude?
 7. Lab biomarkers upper-bound arm: run or skip?
 8. Canonical time grid & window length for sequence/aux views.
-9. CORN vs CORAL final pick (lean CORN — drops proportional-odds).
-10. SSL augmentations appropriate for PPG HR + interval sleep/activity.
+9. ~~CORN vs CORAL final pick~~ → lean-CORN primary **run / null vs C1** (`path_a_raise_corn/REPORT.md`); CORAL optional only.
+10. ~~GBM multi-seed bag + cross-family ensemble~~ → **run / null vs C1** (`path_a_raise_ensemble/REPORT.md`; S=5+S=10).
+11. SSL augmentations appropriate for PPG HR + interval sleep/activity.
 
 **Closed (were open; now locked by audit / Training.md):**
 - ~~`clinical_site`→time-zone mapping feasibility~~ → feasible; UAB Central, UW/UCSD Pacific; mandatory.
@@ -440,7 +457,9 @@ summary:
 - ~~Sex/race availability~~ → not available; struck from onboarding.
 - ~~Stress scale~~ → 0–100; high thresholds ≥51 / ≥76.
 - ~~Headline architecture~~ → B4 + rep-distill under LUPI **ran and null for deployable raise**;
-  B1/B2 ablations **frozen**; Path A first; run order **B1 → B2 → B4 → B3** (B3 last remaining).
+  B4-V2 (RKD/CRD/PCGrad/OOF) also **null** (`REPORT_B4_V2.md`); B1/B2/B2-V2/B3 ablations **frozen**;
+  Path A first; ladder **B1 → B2 → B4 → B3** + siblings complete (optional residual only via new
+  `PLAN_*`, e.g. SSL — not more B4 KD-objective grids).
 - ~~condition_occurrence ICD leakage~~ → no ICDs; self-report dup of observation.
 - ~~`via*` blanket drop~~ → per-field: keep via1–3, drop clinical/retinal via*.
 

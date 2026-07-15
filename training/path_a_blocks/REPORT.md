@@ -24,7 +24,7 @@
 - **Path A tabular frozen (2026-07-14).** Full wrap analytics: `REPORT_A_WRAP.md`.  
 - Headline watch-only unchanged at **0.666**. Secondary tabular = **full C1** (minimal sets failed retention).  
 - Binary in tables = multiclass-derived `1−P0` (dedicated binary HPO never +0.01).  
-- **Next = Path B.** Optional leftovers only: diet, GREEN v2, CORN.  
+- **Next = Path B** (ladder since completed). Post-freeze CORN MLP raise **null** (2026-07-16; `path_a_raise_corn/REPORT.md`). Post-freeze ensemble raise **null** (2026-07-16; `path_a_raise_ensemble/REPORT.md`; S=5 best Δ+0.006). Optional leftovers only: diet, GREEN v2, cal/op-point.  
 - Class-2 remains weak; ends of spectrum still easier than mid severity.
 
 ---

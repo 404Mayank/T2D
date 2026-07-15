@@ -1,0 +1,2 @@
+# Package-local pins (torch/sklearn/optuna already in project venv)
+coral-pytorch==1.4.0

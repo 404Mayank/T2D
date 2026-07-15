@@ -1,0 +1,67 @@
+# Path A raise — CORN/CORAL ordinal MLP on exact C1 matrix
+# See PLAN_A_RAISE_CORN.md
+
+run:
+  seed: 42
+  n_trials_per_arm: 20
+  max_epochs: 200
+  patience: 15
+  min_delta_auc: 1.0e-4
+  auc_tie_eps: 0.005
+  batch_size: 128
+  imbalance: weighted_corn   # none | weighted_corn
+  bootstrap_n: 1000
+  bootstrap_ci: 0.95
+  device: auto
+  mlp_hidden_default: 64
+  mlp_dropout_default: 0.4
+  mlp_lr_default: 1.0e-3
+  mlp_weight_decay_default: 1.0e-3
+
+paths:
+  watch_green: data/processed/features/watch_green.parquet
+  onboarding: data/processed/features/onboarding.parquet
+  mood: data/processed/features/mood.parquet
+  pool_masks: data/processed/meta/pool_masks.parquet
+  artifacts_root: training/path_a_raise_corn/artifacts
+  parent_c1_artifacts: training/path_a_blocks/artifacts
+  parent_c1_run_id: mood_scores_20260714_014415
+  # onboarding keep list lives in path_a_blocks config (imported at runtime)
+  path_a_blocks_config: training/path_a_blocks/config.yaml
+
+data:
+  expected_n: 1824
+  n_features: 47
+  feature_hash: d63ec5713ada37bf
+  n_classes: 4
+  id_col: person_id
+  label_col: label
+  split_col: recommended_split
+  impute: train_median
+  scale: zscore_train
+
+parent_c1_reference:
+  test_macro_ovr_auc: 0.7377859791966677
+  test_binary_auc: 0.8308943089430895
+  test_macro_auprc: 0.4687470484302076
+  family: catboost
+  class2_ovr_auc: 0.6377640845070423
+
+decision_bar:
+  delta_macro_ovr_auc_gt: 0.01
+  require_boot_lo_gt_0: true
+  soft_class2_delta: 0.03
+
+calibration:
+  default_method: sigmoid
+  secondary_method: isotonic
+  min_pos_for_isotonic: 30
+
+hpo:
+  hidden: [32, 64, 128]
+  dropout: [0.3, 0.4, 0.5]
+  batch_size: [64, 128]
+  lr_log_low: 3.0e-4
+  lr_log_high: 3.0e-3
+  weight_decay_log_low: 1.0e-4
+  weight_decay_log_high: 1.0e-2

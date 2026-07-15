@@ -48,9 +48,13 @@ minimal retention fail → keep full C1). Post-freeze sensitivities on C1 (smoki
 `susmk*` not `smok*`); extractor added, no modeling lift. Freeze write-up:
 `training/path_a_blocks/REPORT_A_WRAP.md`.
 
-**Path B status (2026-07-15):** B1/B2/B4 **concluded** — no deployable arm beats C1; B2 oracle
-shows privilege is real. **Next: B3** (logit-KD baseline). Optional Path A leftovers: diet block,
-GREEN v2 FE, CORN.
+**Path B status (2026-07-16):** B1 (plain-λ + GS)/B2/B2-V2/B3/B4/B4-V2 **concluded** — no deployable
+arm beats C1; B2/B2-V2 oracle / B3 teacher show privilege is real. B1 GS (PCGrad/UW) null with moderate
+conflict measured (`REPORT_B1_GS.md`). B2-V2 daily+variance null (`REPORT_B2_V2.md`; Stage-1 val
+R²~0.09, T1v 0.727 ≯ C1). B3 logit-KD null (`REPORT_B3.md`). B4-V2 (RKD/CRD + PCGrad + OOF) null
+(`REPORT_B4_V2.md`; H2 Pearson ~0.30; best hybrid 0.726 ≯ D1 0.736). Optional leftovers: diet,
+GREEN v2 FE, cal/op-point; **CORN MLP raise done / null** (`path_a_raise_corn/`, 0.706 ≯ C1 0.738);
+**ensemble raise done / null** (`path_a_raise_ensemble/`, S=5 best Δ+0.006). Residual LUPI/SSL only via new `PLAN_*` (e.g. `PLAN_SSL.md`) — not more B4 KD churn, CORN primary, or ensemble re-litigation without a new plan.
 
 ## Diasense — teammate baseline to beat / stay distinct from
 

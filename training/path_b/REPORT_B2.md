@@ -163,13 +163,15 @@ Binary side: T1−D1 Δbin point **−0.0168**, CI **[−0.035, −0.0003]** (ex
 | Optional sensitivity | Would it change the freeze? | Recommendation |
 |---|---|---|
 | Stage-1 X = C1 (age/BMI/…) | May raise R² without being a *watch* emulator; still unlikely to close +9 pp oracle gap | **Skip** unless paper needs “even with clinical Stage-1” footnote |
-| Daily `watch_daily` → person glu Stage-1 | Different cell; might improve Ŷ modestly | **Defer to B4 lane** (dynamics), not B2 reopen |
-| Drop collinear glu dims / fewer targets | Cosmetic Stage-2 noise | **Skip** — T1 already ≈ D1 |
+| Daily `watch_daily` → person glu Stage-1 | Different cell; might improve Ŷ modestly | **Done as B2-V2** (`REPORT_B2_V2.md`) — still null |
+| Variance-propagated stacking / reduced Y | Address Ŷ noise / collinearity | **Done as B2-V2** — T1v/T1p still ≯ D1 |
 | Freeze Path A C1 hyperparams for T1 | D1 already matches freeze exactly under re-HPO | **Skip** |
 | Heavier Stage-1 (deeper nets, more trials) | Unlikely: signal from person GREEN to CGM is weak (R²&lt;0.1) | **Skip** as B2 claim work |
 | B1 `z` → Stage-2 GBM hybrid | New experiment, not B2 | Separate plan if ever |
 
-**To fully “rule in” a deployable CGM-aux win over C1 you need a different method** (B4 trajectory / rep-distill / better emulator), not more B2 knobs. Oracle already **rules in** that *true* person CGM features help; predicted handoff **rules out** this modular recipe.
+**Update 2026-07-16:** B2 residual knobs (daily grain, variance pack, reduced Y) were run as sibling **`b2v2_grid_20260716`** — deployable **still null** (T1v 0.727 ≯ C1); oracle +0.096. See `REPORT_B2_V2.md`. Do not reopen frozen B2 HPO.
+
+**To fully “rule in” a deployable CGM-aux win over C1 you need a different method** (not more B2 tabular knobs; B4 traj/rep-distill also null under recipes run). Oracle already **rules in** that *true* person CGM features help; predicted handoff **rules out** modular summary recipes tested.
 
 ---
 
@@ -177,9 +179,10 @@ Binary side: T1−D1 Δbin point **−0.0168**, CI **[−0.035, −0.0003]** (ex
 
 | Next | Implication |
 |---|---|
-| **B4** | **Headline path** — richer glucose-shaped latents than daymean 8-vector; 5-min grid FE still required |
-| **B3** | Still last (teammate KD baseline) |
-| B2 further | **Frozen** — residual rows above are optional footnotes only |
+| **B4** | Ran after B2 freeze — traj/rep-distill **also null** for deployable C1 raise |
+| **B3** | Ran — logit-KD **null** vs C1 (`REPORT_B3.md`) |
+| **B2-V2** | Residual knobs ran — **still null** (`REPORT_B2_V2.md`) |
+| B2 further | **Frozen** — no silent reopen |
 
 ---
 

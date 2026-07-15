@@ -24,18 +24,36 @@
 | `training/path_a_blocks/REPORT_A_WRAP.md` | **Path A freeze** + wrap + C1 sensitivity analytics |
 | `training/path_a_blocks/PLAN_SENS_C1.md` | Post-freeze smoke/obs/via sensitivities (all bar-fail) |
 | `training/path_a_blocks/DECISIONS.md` | Living decisions log for blocks |
-| `training/path_b/` | **Path B** (privileged CGM): B1 **frozen** → B2 **frozen** → B4 **A+B concluded** → B3 |
+| `training/path_a_raise_corn/` | Post-freeze **CORN/CE MLP** raise on exact C1 — **concluded null** (does not reopen freeze) |
+| `training/path_a_raise_corn/REPORT.md` | **CORN raise claim report** (bar fail; CE control; null audit) |
+| `training/path_a_raise_corn/PLAN_A_RAISE_CORN.md` | CORN raise plan (post-critique; executed) |
+| `training/path_a_raise_corn/DECISIONS.md` | CORN raise decisions + null-audit disposition |
+| `training/path_a_raise_ensemble/` | Post-freeze **multi-seed bag + cross-family ensemble** raise vs C1 — **concluded null** |
+| `training/path_a_raise_ensemble/REPORT.md` | **Ensemble raise claim report** (S=5 + S=10 bar fail) |
+| `training/path_a_raise_ensemble/PLAN_A_RAISE_ENSEMBLE.md` | Ensemble raise plan (post-critique; executed) |
+| `training/path_a_raise_ensemble/DECISIONS.md` | Ensemble raise decisions + null disposition |
+| `training/path_b/` | **Path B** (privileged CGM): B1 **frozen** → B2 **frozen** → B2-V2 **frozen** → B4 **A+B concluded** → B4-V2 **null** → B3 **concluded** |
 | `training/path_b/b1/` | B1 package (concluded) |
 | `training/path_b/b2/` | B2 package (concluded; two-stage tabular) |
+| `training/path_b/b2v2/` | B2-V2 package (concluded; daily MSE mid + variance pack) |
+| `training/path_b/b3/` | B3 package (concluded; logit-KD) |
 | `training/path_b/PLAN_B1_DATA.md` | B1 data readiness + daily FE plan |
 | `training/path_b/PLAN_B1_TRAIN.md` | B1 training protocol locks |
 | `training/path_b/PLAN_B1_IMPL.md` | B1 code-shape plan |
 | `training/path_b/PLAN_B1_FIX.md` | C1/C2 fix plan, gates, critique disposition |
+| `training/path_b/PLAN_B1_GS.md` | B1 gradient-balanced MTL retry (PCGrad/UW; concluded) |
 | `training/path_b/PLAN_B2.md` | B2 two-stage plan (implemented) |
+| `training/path_b/PLAN_B2_V2.md` | B2 sibling retry: daily MSE mid + variance packing (concluded) |
 | `training/path_b/PLAN_B4.md` | B4 trajectory + rep-distill plan (A+B concluded) |
+| `training/path_b/PLAN_B4_V2.md` | B4 sibling retry plan (RKD/CRD + PCGrad + OOF; **concluded**) |
+| `training/path_b/REPORT_B4_V2.md` | **B4-V2 claim report** (null; valid accept; post-claim approve-with-caveats) |
+| `training/path_b/PLAN_B3.md` | B3 logit-KD baseline plan (implemented / freeze) |
 | `training/path_b/DECISIONS.md` | Path B decisions / acceptance log |
-| `training/path_b/REPORT_B1.md` | **B1 final freeze report** |
+| `training/path_b/REPORT_B1.md` | **B1 final freeze report** (plain-λ) |
+| `training/path_b/REPORT_B1_GS.md` | **B1 GS freeze** (PCGrad/UW null; conflict measured) |
 | `training/path_b/REPORT_B2.md` | **B2 final freeze report** (null predicted; oracle headroom) |
+| `training/path_b/REPORT_B2_V2.md` | **B2-V2 freeze** (daily+variance null; oracle +0.096; audit authentic) |
+| `training/path_b/REPORT_B3.md` | **B3 final freeze report** (logit-KD null; teacher OK) |
 | `training/path_b/REPORT_B4.md` | **B4-A claim report** (traj multi-task null; hybrid < C1) |
 | `training/path_b/REPORT_B4_B.md` | **B4-B claim report** (rep-distill null; teacher OK) |
 | `training/path_b/REPORT_B4_B_HARD.md` | **B4-B hard-teacher** H1/H2 null (easy-teacher gap closed) |
@@ -64,7 +82,7 @@ Skip plan/critique only for **small patches** (typo, one-liner, doc-only nits, p
 | **Subagents** | Use for isolation/parallel; **parent synthesizes**. Prefer `explorer.logic` for flow bugs, `web-researcher` for external methods. |
 
 **Other standing rules**
-- Path B ladder: **B1 (frozen) → B2 (frozen) → B4 A+B (concluded) → B3 last**. Do not silently reorder.
+- Path B ladder: **B1 (frozen) → B2 (frozen) → B4 A+B (concluded) → B3 (concluded)**; sibling retries **B2-V2** / **B1-GS** / **B4-V2** all **frozen null**. Do not silently reorder or reopen claim grids without a new `PLAN_*`.
 - **Never claim Path A numbers changed** unless Path A was re-run. Path A wrap is frozen.
 - Pre-fix / invalidated runs stay labeled as such (e.g. B1 `b1_grid_20260714`); new run ids after protocol/FE fixes — do not overwrite old “success” interpretations.
 - Protocol locks in `PLAN_*` / `DECISIONS` are not optional; open a new plan to change them.

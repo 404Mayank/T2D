@@ -1,7 +1,7 @@
 # Path B4 — seq2seq CGM-trajectory teacher + rep-distill (headline)
 
 **Date:** 2026-07-15  
-**Status:** **B4 A+B CONCLUDED** 2026-07-15 — A: `b4_grid_20260715` (`REPORT_B4.md`); B: `b4b_distill_20260715` (`REPORT_B4_B.md`). Next: B3.  
+**Status:** **B4 A+B CONCLUDED** 2026-07-15 — A: `b4_grid_20260715` (`REPORT_B4.md`); B: `b4b_distill_20260715` (`REPORT_B4_B.md`); hard teachers `REPORT_B4_B_HARD.md`. Sibling **B4-V2 also null** 2026-07-16 (`REPORT_B4_V2.md`). B3 separately concluded.  
 **Role:** Path B **headline candidate** — full CGM trajectory supervision / representation LUPI.  
 **Authority:** `Training.md` §4 B4 / §7; Path A freeze `REPORT_A_WRAP.md`; B1/B2 freezes `REPORT_B1.md` / `REPORT_B2.md` + `DECISIONS.md`; data `PROCESSED.md` / `CLEANING.md` / `FEATURES.md` §8 view (b-grid).  
 **User ambition bar:** beat Path A **C1** (test 4-AUC **0.7378** / binary **0.8309** / macro AUPRC **0.4687**).  

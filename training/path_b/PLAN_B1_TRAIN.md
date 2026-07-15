@@ -1,7 +1,8 @@
 # Path B1 — controlled multi-task training plan
 
 **Date:** 2026-07-14  
-**Status:** revised after critique; ready to implement.  
+**Status:** **implemented / plain-λ frozen** (`REPORT_B1.md`). GS sibling: `PLAN_B1_GS.md` /
+`REPORT_B1_GS.md` (also concluded).  
 **Role:** ablation only — not paper headline. Headline is B4 later.  
 **Authority:** `Training.md` §4 B1 / §7 step 2; bars from Path A freeze.
 
@@ -103,6 +104,8 @@ L = L_{\text{CE}}(y,\hat y) + \lambda \cdot L_{\text{glu}}
   aux_eligible valid days only**. If a batch has zero glu-mask mass → skip glu term (log).
 - **λ grid:** `{0, 0.3, 0.5, 1.0}`.
 - Uncertainty / GradNorm: only if fixed-λ shows clear task conflict. Not default.
+  **Follow-up (2026-07-16):** conflict later measured and GS (PCGrad/UW) run under
+  `PLAN_B1_GS.md` / `REPORT_B1_GS.md` — class Δ still null; do not reopen plain-λ here.
 
 ### 3.4 What is held fixed across λ
 
