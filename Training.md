@@ -256,11 +256,10 @@ sequence/aux models — not a substitute for locking class weights before featur
 4. **B4 (seq2seq traj + rep-distill)** — **done / concluded null** for deployable raise (A + B easy +
    hard teachers). Grid FE + package `training/path_b/b4/`. See `REPORT_B4*.md`.
 5. **B3 logit-KD baseline** — **done / frozen** (Diasense-style; G_α=0.3 null vs C1; `REPORT_B3.md`).
-6. **SSL-pretrained backbone** (gated) as the lever to make the raw 1-min end-to-end model viable
-   (instead of a cold-start CNN the hourly-failure prior says will underperform). MOMENT-embedding
-   + GBM as a one-afternoon high-variance side bet.
-7. **Generative augmentation + calibration** wherever the sequence/aux models show minority-class
-   data hunger or miscalibration.
+6. **SSL-pretrained backbone** (gated) — residual priority #1 after Path B nulls; see **§10**.
+   MOMENT-embedding → GBM is the one-afternoon smoke; in-domain SSL needs `PLAN_SSL.md`.
+7. **Generative augmentation + calibration / selective prediction** — cal+conformal is residual
+   priority #3 (§10); generative aug only if a sequence backbone is alive and class-3 hunger shows.
 
 ## 8. What is explicitly not the contribution
 
@@ -281,12 +280,82 @@ sequence/aux models — not a substitute for locking class weights before featur
 - Whether to train the T2D head on all wearable-eligible participants while the glucose head
   trains on the effective aux subset with a shared backbone (avoid silently restricting T2D to
   CGM-haves).
-- SSL augmentations appropriate for PPG HR + interval sleep/activity (not all image-style
-  augmentations transfer cleanly).
-- Whether MOMENT embeddings are worth keeping given generic-pretraining transfer caveat.
+- SSL augmentations appropriate for 1-min PPG HR + interval sleep/activity (not all image-style
+  augmentations transfer cleanly) — lock inside `PLAN_SSL.md` (§10).
+- Whether MOMENT embeddings are worth keeping given generic-pretraining transfer caveat —
+  decide by the §10 smoke (embed→GBM vs W0); do not assume transfer a priori.
 - Min CGM↔wearable overlap threshold for aux (≥24h vs ≥72h) and year-long-wear truncation policy
-  — lock with cleaning, before B4 alignment work (`DATA_AUDIT.md` B5.2 / B4.3 / B10).
+  — locked for B1/B4 runs already; re-open only with a new aux plan.
 
 **Closed (data/feature side; see `FEATURES.md` §12):** sex/race unavailable; stress 0–100;
 headline = B4+rep-distill not multi-task; `condition_occurrence` is self-report not ICD;
 `clinical_site`→TZ map is feasible and mandatory; SpO₂ stays Tier-3 at 71.8% coverage.
+
+**Closed (Path A raises / Path B ladder):** CORN MLP raise null; ensemble raise null; B1–B4 + GS/V2
+siblings all frozen/concluded null for deployable raise vs C1. Residual work only via new `PLAN_*`
+under §10 — not more B4 KD/MTL grids, CORN primary, or ensemble re-litigation.
+
+## 10. Post-ladder residual priorities (worth trying)
+
+Filtered after Path A freeze + full Path B null ladder + multi-round external-method review
+(SSL/TSFM, site-out, conformal, complexity/dynamics FE, nocturnal LUPI targets, wearable FMs,
+cross-cohort transport, GNN/MAML/Mamba/PINN-style proposals). Bars and pools unchanged:
+watch-only claim vs **W0 0.666**; deployable secondary = **C1 0.738 / 0.831**; decision bar
+ΔAUC **>+0.01** with person-bootstrap CI lo > 0 unless the item is explicitly eval/deployment
+(no AUC raise required). New LUPI cells need a new `PLAN_*` — not a silent B2 HPO reopen.
+
+### 10.1 Do next (ordered)
+
+| Pri | Work | Effort | Success criterion | Notes |
+|---|---|---|---|---|
+| **1** | **SSL / TSFM spike** | afternoon smoke → 1–2 wk if alive | Watch-only 4-AUC vs **W0 0.666** (primary); hybrid vs C1 secondary only | Cold-start seq lost (B1 pure-seq ~0.652). Coherent residual after LUPI nulls. **Smoke:** frozen MOMENT (or similar) embeddings on day / 5-min HR–stress–steps windows → LightGBM/CatBoost. **Real thread:** in-domain SSL on AI-READI (masked recon and/or same-person contrastive) → fine-tune or embed→GBM. Needs `PLAN_SSL.md`. RevIN caveat: keep amplitude/scale stats beside embeddings. Optional later: actigraphy-side external FMs that match our streams (e.g. **PAT**-style on minute activity; NHANES actigraphy pretrain) — **not** raw-PPG FMs (PaPaGei/NormWear waveform path) without PPG. |
+| **2** | **Leave-site-out evaluation** on W0 + C1 | 1–3 days | Per-site AUC + cal; LOSO ×3 reported | Site×label confound is real (UAB ~53% of insulin). TZ fixed for FE; site never used as **eval axis**. Paper armor, not an AUC raise on `recommended_split`. Optional later: site-adversarial training only if LOSO shows catastrophic transport. |
+| **3** | **Nocturnal / sleep-window privileged CGM targets** (new LUPI cell, e.g. `PLAN_B5_NOC`) | low–med (reuse B2 harness) | **Gate first:** Stage-1 val R² / Pearson on nocturnal Y ≫ B2’s ~0.05–0.09; only then Stage-2 vs matched D1/C1 | Attacks the measured B2 bottleneck (24-h CGM confounded by meals the watch barely sees). Overnight watch features are already strong (RHR, nocturnal HR/stress, sleep, SRI); literature supports nocturnal HR↔glycemia coupling. **Targets from existing assets:** `grid_5min` has `asleep`∩`cgm` (~1.05M bins, ~1770 people) + local sleep intervals → nocturnal mean/CV/TBR, optional dawn-slope. Stage-2 handoff same shape as B2 so comparison isolates **target window**, not a new objective zoo. Even a Stage-1-null is informative (bottleneck on watch side). **Not** a reopen of B2 HPO. |
+| **4** | **Calibration + selective / conformal** on C1 | few days | Coverage, set size, abstention rate, accuracy on retained | Matches risk-stratification framing. Mondrian-by-`clinical_site` (and optional class) + abstain on ambiguous (esp. class 2). Ordinal/adaptive prediction sets OK. Does **not** need to beat 0.738 AUC. |
+| **5** | **Watch dynamics + complexity FE** (GREEN v2-ish) | 1–3 days | Path A smoke vs W0; feature-block bar | **Complexity:** DFA / SampEn on 1-min HR (minute-scale complexity, **not** clinical RR-HRV). **Dynamics (absent from current GREEN):** day-to-day lag-1 autocorr / trend of daily RHR, sleep duration, stress; deviation-from-personal-baseline morphology over the wear window (median ~14d is enough for crude estimates). Pure watch — can raise the *headline* W0 number. Full B-ladder on complexity aux targets only if Stage-1 R² clearly moves. |
+| **6** | **Path A leftovers** | optional | Diet block if non-leaking; further GREEN polish only if SHAP says watch under-extracts | Freeze polish, not novelty. Diet never run; C1 sensitivities already null. |
+
+### 10.2 Paper / methods cells (low code, high write-up value)
+
+| Work | Why |
+|---|---|
+| **LUPI transfer-gap / fidelity-bound write-up** | You already own a full controlled ladder (MTL, two-stage, logit-KD, rep-distill, RKD/CRD) with oracles proving privilege (+~0.09) and deployable nulls. Frame as “when does privileged CGM transfer to watch-only?” + simple simulation: how good must Stage-1 R²/Pearson be before handoff can beat direct. Converts concluded nulls into a methods result (ML4H/CHIL-style), not a failed project. |
+| **Cross-cohort transport (true external)** | Beyond site-LOSO: train on AI-READI → evaluate on harmonized external (e.g. NHANES actigraphy + lab-derived metabolic labels; CGMacros n=45 Fitbit+CGM as tiny external). Report ΔAUC + recalibration. Label mismatch is the hard part (4-class severity ≠ HbA1c cut) — design shared feature subset + honest binary/metabolic proxies. Paper-defining robustness; not a C1 raise. |
+
+### 10.3 Maybe later (conditional)
+
+| Work | Gate |
+|---|---|
+| Soft LUPI (e.g. VIB-style) **on top of an SSL wearable encoder** | SSL shows watch-only signal; not another cold B4 teacher upgrade |
+| Ordinal / prototype contrastive **as loss on SSL reps** | Embeddings exist; CORN MLP alone already null vs C1 |
+| Frequency-aware (wavelet) augs | Inside `PLAN_SSL.md`, not a separate package |
+| Unsupervised subphenotyping (CGM/wearable clusters ≠ 4-class label) | **Reframe** scientific claim; not “beat C1” |
+| Multi-dataset CGM teacher (Glucose-ML index) | Optional privileged side bet; AI-READI already in that collection; teacher upgrades historically failed to transfer |
+| BIG IDEAs (PhysioNet, n=16 Empatica+Dexcom) | External wearable↔glucose sanity / citation only — **not** pretrain fuel |
+| PAT / NHANES actigraphy pretrain → AI-READI | After MOMENT/in-domain SSL smoke; actigraphy channel match is better than PPG FMs |
+| Site-adversarial / invariant training | Only if §10.1 #2 LOSO shows model ≈ site detector |
+
+### 10.4 Not worth trying (now)
+
+| Drop | Why |
+|---|---|
+| More B1/B2/B3/B4 KD·MTL·RKD/CRD grids on the **same 24-h CGM targets**; CORN primary; multi-seed ensemble re-litigation | Frozen null under recipes run. **Exception:** new physiological target window (§10.1 #3) is a different cell, not a grid reopen. |
+| GNN multi-sensor fusion as headline | Small n, weak wearable→glucose SNR; high-variance architecture |
+| MAML / few-shot personalization | One severity label per person; no multi-episode task structure |
+| Mamba/MedMamba (or pure backbone swap) as first raise | Cold architecture swap without better reps repeats B1/B4 failure mode |
+| Bergman PINN / physics insulin-sensitivity from watch alone | Wrong observables (no continuous I(t) at deploy); underdetermined at measured SNR |
+| Unified mega-stack (MOMENT+StepFM+GlucoFM+Mamba+VIB+PINN+ordinal SupCon) | Unfalsifiable; violates one-`PLAN_*` discipline |
+| PaPaGei / Pulse-PPG / NormWear **waveform** path / Apple AHMS foundation **weights** | Need raw PPG (or closed weights); we have **1-min derived HR**, not PPG waveform. Treating 1-min HR as a degraded PPG channel is a reportable degradation experiment only, not the main path. |
+| “Add circadian / cosinor” as new work | Already in GREEN (`rar_*`, SRI, nocturnal dip) |
+| Matrix Profile motifs as primary claim | Exploratory FE at best |
+| Cross-dataset wearable pretrain as **main** lever without channel match | Sensor/label mismatch; Glucose-ML is CGM-first and T1D-heavy |
+
+### 10.5 Claim hygiene
+
+- **Watch-only paper claim** is measured against **W0 0.666**, not C1.
+- **C1 0.738 / 0.831** is the deployable secondary bar for any hybrid/onboarding stack.
+- External CGM collections (Glucose-ML, BIG IDEAs, CGMacros) are **supporting cast** for optional teacher/context/transport — not a free watch-only pretrain corpus.
+- Do not claim Path A numbers changed unless Path A is re-run. New work gets its own run id + `REPORT` / `DECISIONS` under a new package or `PLAN_*`.
+- Prefer **one new hypothesis per `PLAN_*`** (target window *or* SSL *or* FE family) so nulls stay interpretable.
+
+**Recommended sequence:** (2) leave-site-out → (1) MOMENT smoke → `PLAN_SSL.md` if alive → (3) nocturnal-CGM Stage-1 smoke / `PLAN_B5_NOC` if R² moves → (4) conformal/selective on C1 → (5) dynamics+complexity FE → (6) leftovers. Parallel cheap write-up: LUPI transfer-gap analysis (§10.2).
